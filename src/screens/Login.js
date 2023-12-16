@@ -11,6 +11,10 @@ import {
   Pressable,
 } from "react-native";
 import Button from "../component/SignUpButton";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import memberApi from "../api/Api";
+
 import { registerdUserList } from "../screens/SignUp";
 
 class user {
@@ -23,24 +27,44 @@ class user {
   }
 }
 export let loginUserList = [];
-const checkLogin = (email, password) => {
-  for (let i = 0; i < registerdUserList.length; i++) {
-    if (
-      registerdUserList[i].email == email &&
-      registerdUserList[i].password == password
-    ) {
-      loginUserList.push(registerdUserList[i]);
-      return true;
-    }
-  }
-  return false;
-};
+
 const Login = ({ route, navigation }) => {
   const [inputEmail, setInputEmail] = useState("");
   const [inputPassword, setInputPassword] = useState("");
   const [message, setMessage] = useState("");
 
   const [modalVisible, setModalVisible] = useState(false);
+
+  const handleLogin = async () => {
+    try {
+      const response = await memberApi.signIn({
+        email: inputEmail,
+        password: inputPassword,
+      });
+
+      if (response.data.code === "1") {
+        // 로그인 성공 시
+        const accessToken = response.data.data.accessToken;
+        const refreshToken = response.data.data.refreshToken;
+
+        // AsyncStorage에 토큰 저장
+        await AsyncStorage.setItem('access-token', accessToken);
+        await AsyncStorage.setItem('refresh-token', refreshToken);
+
+        // 홈페이지로 이동
+        navigation.navigate("HomePageScreen", {});
+      } else {
+        // 로그인 실패 시
+        setMessage(response.data.message);
+        setModalVisible(true);
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage("오류가 발생했습니다. 다시 시도해주세요.");
+      setModalVisible(true);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* 로그인 실패 Modal */}
@@ -107,14 +131,7 @@ const Login = ({ route, navigation }) => {
           </View>
           <Button
             title="Login"
-            onPress={() => {
-              if (checkLogin(inputEmail, inputPassword) == true) {
-                navigation.navigate("HomePageScreen", {});
-              } else {
-                setMessage("아이디와 비밀번호를 확인해주세요.");
-                setModalVisible(true);
-              }
-            }}
+            onPress={handleLogin}
             buttonStyle={styles.button}
             textStyle={styles.buttonText}
           />
