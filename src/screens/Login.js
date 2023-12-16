@@ -11,7 +11,6 @@ import {
   Pressable,
 } from "react-native";
 import Button from "../component/SignUpButton";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import memberApi from "../api/Api";
 
@@ -26,9 +25,7 @@ class user {
     this.address = address;
   }
 }
-export let loginUserList = [];
-
-const Login = ({ route, navigation }) => {
+const Login = ({ navigation }) => {
   const [inputEmail, setInputEmail] = useState("");
   const [inputPassword, setInputPassword] = useState("");
   const [message, setMessage] = useState("");

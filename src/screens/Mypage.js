@@ -7,13 +7,33 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
-import { loginUserList } from "./Login";
-import { purchaseCount } from "./Purchase";
-
+import memberApi from "../api/Api"
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const { width: ScreenWidth } = Dimensions.get("window");
 const { height: ScreenHeight } = Dimensions.get("window");
 
-const Mypage = () => {
+const Mypage = ({ navigation }) => {
+  const [userInfo, setUserInfo] = useState({});
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await memberApi.getMyInfo();
+        if (response.data.code === "1") {
+          setUserInfo(response.data.data);
+        }
+        if (response.data.code === "13") {
+          await AsyncStorage.clear();
+          navigation.navigate("Login", {});
+        }
+      } catch (error) {
+        console.error("사용자 정보를 가져오는 중 에러 발생:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
   return (
     <ScrollView>
       <View style={styles.container}>
@@ -23,7 +43,7 @@ const Mypage = () => {
             style={styles.userProfile}
           />
           <View style={styles.userNameRank}>
-            <Text style={styles.userName}>{loginUserList[0].name} 님</Text>
+            <Text style={styles.userName}>{userInfo.name} 님</Text>
             <Text
               style={{
                 fontSize: 22,
@@ -44,19 +64,19 @@ const Mypage = () => {
             <Text style={{ fontSize: 17, color: "gray", marginRight: 43 }}>
               이메일
             </Text>
-            <Text style={{ fontSize: 17 }}>{loginUserList[0].email}</Text>
+            <Text style={{ fontSize: 17 }}>{userInfo.email}</Text>
           </View>
           <View style={styles.userInfo}>
             <Text style={{ fontSize: 17, color: "gray", marginRight: 28 }}>
               전화번호
             </Text>
-            <Text style={{ fontSize: 17 }}>{loginUserList[0].phoneNumber}</Text>
+            <Text style={{ fontSize: 17 }}>{userInfo.phone}</Text>
           </View>
           <View style={styles.userInfo}>
             <Text style={{ fontSize: 17, color: "gray", marginRight: 59 }}>
               주소
             </Text>
-            <Text style={{ fontSize: 17 }}>{loginUserList[0].address}</Text>
+            <Text style={{ fontSize: 17 }}>{userInfo.address}</Text>
           </View>
         </View>
         <View style={styles.service}>
@@ -144,7 +164,7 @@ const Mypage = () => {
                   marginBottom: -10,
                 }}
               >
-                {purchaseCount}
+                {0}
               </Text>
               <Text style={{ fontSize: 15 }}>결제완료</Text>
             </View>
@@ -160,7 +180,7 @@ const Mypage = () => {
               >
                 0
               </Text>
-              <Text style={{ fontSize: 15 }}>상품준비중</Text>
+              <Text style={{ fontSize: 15 }}>준비중</Text>
             </View>
             <Text style={{ fontSize: 15, marginHorizontal: 10 }}>▷</Text>
             <View style={styles.statusContext}>

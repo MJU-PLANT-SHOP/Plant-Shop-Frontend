@@ -30,22 +30,27 @@ axiosInstance.interceptors.request.use(async (config) => {
 const memberApi = {
   signUp: async (data) => {
     const response = await axiosInstance.post('/members/sign-up', data);
+    console.log(response);
     return response;
   },
   signIn: async (data) => {
     const response = await axiosInstance.post('/members/sign-in', data);
+    console.log(response.data);
     return response;
   },
   reissue: async (data) => {
     const response = await axiosInstance.post('/members/reissue', data);
+    console.log(response.data);
     return response;
   },
   getMyInfo: async () => {
     const response = await axiosInstance.get('/members/me');
+    console.log(response.data);
     return response;
   },
   checkEmail: async (email) => {
     const response = await axiosInstance.get(`/members/check-email?email=${email}`);
+    console.log(response.data);
     return response;
   }
 }
