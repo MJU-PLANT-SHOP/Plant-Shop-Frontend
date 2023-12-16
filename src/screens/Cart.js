@@ -125,6 +125,28 @@ const Cart = ({ navigation }) => {
         setItems(updatedItems);
         await AsyncStorage.setItem("cart", JSON.stringify(updatedItems));
       }
+      else if (response.data.code === "13"){
+        const accessToken = await AsyncStorage.getItem('access-token');
+        const refreshToken = await AsyncStorage.getItem('refresh-token');
+        const updateTokenResponse = await memberApi.reissue({
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        });
+        if (updateTokenResponse.data.code === "1") {
+          const newAccessToken = updateTokenResponse.data.data.accessToken;
+          const newRefreshToken = updateTokenResponse.data.data.refreshToken;
+          await AsyncStorage.setItem('access-token', newAccessToken);
+          await AsyncStorage.setItem('refresh-token', newRefreshToken);
+
+          //장바구니 삭제하는 부분 다시 실행
+          const retryDeleteResponse = await cartApi.deleteCartItem(items[index].cartId);
+          if (retryDeleteResponse.data.code === "13") {
+            console.error('토큰 업데이트 실패. 다시 로그인 부탁드립니다.');
+            await AsyncStorage.clear();
+            navigation.navigate("Login", {});
+          }
+        }
+      }
       else if (response.data.code === "30"){
         setErrorMessage(response.data.message);
         setModalVisible(true);
