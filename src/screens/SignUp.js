@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import Button from "../component/SignUpButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import memberApi from "../api/Api";
+
 class user {
   constructor(email, password, name, phoneNumber, address) {
     this.email = email;
@@ -22,31 +24,7 @@ class user {
     this.address = address;
   }
 }
-// 이메일 형식 체크 함수
-const checkEmail = email => {
-  const regex =
-    /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/;
-  return regex.test(email);
-};
-// 이메일 중복 체크 함수
-const checkDuplicateEmail = email => {
-  for (let i = 0; i < registerdUserList.length; i++) {
-    if (registerdUserList[i].email == email) {
-      return false;
-    }
-  }
-  return true;
-};
-// 회원 리스트
-export let registerdUserList = [
-  new user(
-    "email@naver.com",
-    "asd123",
-    "김테스",
-    "010-1111-2222",
-    "서울시 성북구"
-  ),
-];
+
 // Sing Up Main
 const SignUp = ({ route, navigation }) => {
   const [email, setEmail] = useState("");
@@ -66,6 +44,50 @@ const SignUp = ({ route, navigation }) => {
   const [isNameFocus, setIsNameFocus] = useState(false);
   const [isPNFocus, setIsPNFocus] = useState(false);
   const [isAdFocus, setIsAdFocus] = useState(false);
+
+  const handleSignUp = async () => {
+    try {
+      const newUser = new user(email, password, name, phoneNumber, address);
+
+      const response = await memberApi.signUp(newUser);
+
+      if (response.data.code === "1") {
+        // 회원가입 성공 시
+        setErrorMessage(response.data.message);
+        setModalVisible(true);
+      } else {
+        // 회원가입 실패 시
+        setErrorMessage(response.data.message);
+        setModalVisible(true);
+      }
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("오류가 발생했습니다. 다시 시도해주세요.");
+      setModalVisible(true);
+    }
+  };
+
+  const handleCheckEmail = async () => {
+    try {
+      const response = await memberApi.checkEmail(email);
+
+      if (response.data.code === "1") {
+        // 이메일 중복이 아닌 경우
+        setErrorMessage(response.data.message);
+        setDuplicateCheck(true);
+      } else {
+        // 이메일 중복인 경우
+        setErrorMessage(response.data.message);
+        setDuplicateCheck(false);
+      }
+      setCheckModalVisible(true);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("오류가 발생했습니다. 다시 시도해주세요.");
+      setModalVisible(true);
+    }
+  };
+
   return (
     <Pressable style={{ flex: 1 }} onPress={() => Keyboard.dismiss()}>
       <View style={styles.container}>
@@ -148,22 +170,7 @@ const SignUp = ({ route, navigation }) => {
                   />
                   <Button
                     title="중복확인"
-                    onPress={() => {
-                      if (checkEmail(email) == true) {
-                        if (checkDuplicateEmail(email) == true) {
-                          setErrorMessage("사용가능한 이메일입니다.");
-                          setDuplicateCheck(true);
-                        } else {
-                          setErrorMessage("이미 사용중인 이메일입니다.");
-                          setDuplicateCheck(false);
-                        }
-                        setCheckModalVisible(true);
-                      } else if (checkEmail(email) == false) {
-                        setErrorMessage("이메일을 형식을 확인해주세요");
-                        setDuplicateCheck(false);
-                        setCheckModalVisible(true);
-                      }
-                    }}
+                    onPress={handleCheckEmail}
                     buttonStyle={styles.duplicateCheckButton}
                     textStyle={styles.duplicateCheckButtonText}
                   />
@@ -296,11 +303,7 @@ const SignUp = ({ route, navigation }) => {
                 title="회원가입하기"
                 onPress={() => {
                   if (duplicateCheck == true) {
-                    registerdUserList.push(
-                      new user(email, password, name, phoneNumber, address)
-                    );
-                    setErrorMessage("회원가입이 완료되었습니다.");
-                    setModalVisible(true);
+                    handleSignUp();
                   } else {
                     setErrorMessage("이메일 중복확인을 먼저 해주세요.");
                     setModalVisible(true);
