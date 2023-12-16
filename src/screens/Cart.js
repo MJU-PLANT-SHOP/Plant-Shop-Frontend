@@ -8,6 +8,7 @@ import {
   Pressable,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {memberApi, cartApi} from "../api/Api";
 import { priceToInt } from "../object/Object";
 import Button, { ButtonTypes } from "../component/PurchaseButton";
 import BasicButton from "../component/BasicButton";
@@ -99,6 +100,8 @@ const Item = ({ item, quantity, price, index, onDelete }) => {
 
 const Cart = ({ navigation }) => {
   const [items, setItems] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -116,11 +119,24 @@ const Cart = ({ navigation }) => {
 
   const handleDelete = async index => {
     try {
-      const updatedItems = items.filter((_, itemIndex) => itemIndex !== index);
-      setItems(updatedItems);
-      await AsyncStorage.setItem("cart", JSON.stringify(updatedItems));
-    } catch (e) {
-      console.log(e);
+      const response = await cartApi.deleteCartItem(items[index].cartId);
+      if (response.data.code === "1") {
+        const updatedItems = items.filter((_, itemIndex) => itemIndex !== index);
+        setItems(updatedItems);
+        await AsyncStorage.setItem("cart", JSON.stringify(updatedItems));
+      }
+      else if (response.data.code === "30"){
+        setErrorMessage(response.data.message);
+        setModalVisible(true);
+      }
+      else {
+        setErrorMessage("알 수 없는 오류 발생");
+        setModalVisible(true);
+      }
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("오류가 발생했습니다. 다시 시도해주세요.");
+      setModalVisible(true);
     }
   };
 
