@@ -1,7 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const baseURL = "http://3.39.14.156:8080";
+const baseURL = "http://3.39.14.156:8080/api";
 
 // AsyncStorage에서 토큰을 가져와서 axios 헤더에 설정
 const setAuthorizationHeader = async () => {
@@ -29,23 +29,23 @@ axiosInstance.interceptors.request.use(async (config) => {
 // 회원 API
 const memberApi = {
   signUp: async (data) => {
-    const response = await axiosInstance.post('/api/members/sign-up', data);
+    const response = await axiosInstance.post('/members/sign-up', data);
     return response;
   },
   signIn: async (data) => {
-    const response = await axiosInstance.post('/api/members/sign-in', data);
+    const response = await axiosInstance.post('/members/sign-in', data);
     return response;
   },
   reissue: async (data) => {
-    const response = await axiosInstance.post('/api/members/reissue', data);
+    const response = await axiosInstance.post('/members/reissue', data);
     return response;
   },
   getMyInfo: async () => {
-    const response = await axiosInstance.get('/api/members/me');
+    const response = await axiosInstance.get('/members/me');
     return response;
   },
   checkEmail: async (email) => {
-    const response = await axiosInstance.get(`/api/members/check-email?email=${email}`);
+    const response = await axiosInstance.get(`/members/check-email?email=${email}`);
     return response;
   }
 }
