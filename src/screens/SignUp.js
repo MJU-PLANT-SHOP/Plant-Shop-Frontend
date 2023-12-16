@@ -16,11 +16,11 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import memberApi from "../api/Api";
 
 class user {
-  constructor(email, password, name, phoneNumber, address) {
+  constructor(email, password, name, phone, address) {
     this.email = email;
     this.password = password;
     this.name = name;
-    this.phoneNumber = phoneNumber;
+    this.phone = phone;
     this.address = address;
   }
 }
@@ -35,6 +35,7 @@ const SignUp = ({ route, navigation }) => {
 
   const [errorMessage, setErrorMessage] = useState("");
   const [duplicateCheck, setDuplicateCheck] = useState(false);
+  const [isSignUpSuccess, setIsSignUpSuccess] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [checkModalVisible, setCheckModalVisible] = useState(false);
@@ -47,12 +48,13 @@ const SignUp = ({ route, navigation }) => {
 
   const handleSignUp = async () => {
     try {
-      const newUser = new user(email, password, name, phoneNumber, address);
+      const User = new user(email, password, name, phoneNumber, address);
 
-      const response = await memberApi.signUp(newUser);
+      const response = await memberApi.signUp(User);
 
       if (response.data.code === "1") {
         // 회원가입 성공 시
+        setIsSignUpSuccess(true);
         setErrorMessage(response.data.message);
         setModalVisible(true);
       } else {
@@ -106,7 +108,7 @@ const SignUp = ({ route, navigation }) => {
               title="확인"
               onPress={() => {
                 setModalVisible(false);
-                if (duplicateCheck == true) {
+                if (isSignUpSuccess == true) {
                   navigation.navigate("Login", {});
                 }
               }}
