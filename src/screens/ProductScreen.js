@@ -18,6 +18,7 @@ import FooterButton from "../component/FooterButton";
 import BasicButton from "../component/BasicButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { priceToInt, products } from "../object/Object";
+import {cartApi} from "../api/Api";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -390,69 +391,40 @@ const ProductScreen = ({ route, navigation }) => {
                     style={styles.modalButton}
                     title="장바구니 담기"
                     onPress={async () => {
-                      productObject.quantity = productNum;
-                      let data = productObject;
-
-                      const currentItems = await AsyncStorage.getItem("cart");
-                      let updatedItems = currentItems
-                        ? JSON.parse(currentItems)
-                        : [];
-
-                      let existsInCart = updatedItems.some(item => {
-                        return item.id == productObject.id;
-                      });
-
-                      if (existsInCart) {
-                        Alert.alert(
-                          "",
-                          "상품이 이미 장바구니에 존재합니다. 장바구니 페이지로 이동 하시겠습니까?",
-                          [
-                            {
-                              text: "OK",
-                              onPress: () => {
-                                navigation.navigate("장바구니");
-                              },
-                            },
-                            {
-                              text: "NO",
-                              onPress: () => {
-                                setCartModalVisible(false);
-                              },
-                            },
-                          ]
-                        );
+                        try{
+                            const response = await cartApi.addToCart({
+                                productId: item.id,
+                                count: productNum,
+                            });
+                            if (response.data.code === "1") {
+                                Alert.alert(
+                                    "",
+                                    "상품이 장바구니에 담겼습니다. 장바구니 페이지로 이동 하시겠습니까?",
+                                    [
+                                        {
+                                            text: "OK",
+                                            onPress: () => {
+                                                navigation.navigate("장바구니");
+                                            },
+                                        },
+                                        {
+                                            text: "NO",
+                                            onPress: () => {
+                                                setCartModalVisible(false);
+                                            },
+                                        },
+                                    ]
+                                );
+                            } else if (response.data.code === "13") {
+                                await tokenUpdate();
+                            } else {
+                                console.error("장바구니에 상품을 추가하는데 실패했습니다.");
+                            }
+                        } catch (error) {
+                            console.error(error);
+                        }
                         setCartModalVisible(false);
-                      } else {
-                        let updatedItems = currentItems
-                          ? JSON.parse(currentItems)
-                          : [];
-                        updatedItems = [...updatedItems, data];
-                        await AsyncStorage.setItem(
-                          "cart",
-                          JSON.stringify(updatedItems)
-                        );
-                        Alert.alert(
-                          "",
-                          "상품이 장바구니에 담겼습니다. 장바구니 페이지로 이동 하시겠습니까?",
-                          [
-                            {
-                              text: "OK",
-                              onPress: () => {
-                                navigation.navigate("장바구니");
-                              },
-                            },
-                            {
-                              text: "NO",
-                              onPress: () => {
-                                setCartModalVisible(false);
-                              },
-                            },
-                          ]
-                        );
-                      }
-
-                      setCartModalVisible(false);
-                      setProductNum(0);
+                        setProductNum(0);
                     }}
                   ></BasicButton>
 
