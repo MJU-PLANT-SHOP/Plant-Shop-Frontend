@@ -1,2 +1,2 @@
-# Plant-Shop-Frontend
-Plant Shop Frontend by React Native
+# Plant-Shop-Mobile
+Plant Shop Mobile by React Native
