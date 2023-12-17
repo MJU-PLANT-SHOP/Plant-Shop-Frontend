@@ -50,19 +50,19 @@ export default memberApi;
 // 장바구니 API
 const cartApi = {
     addToCart: async (data) => {
-        const response = await axiosInstance.post('/cart', data);
+        const response = await axiosInstance.post('/carts', data);
         return response;
     },
     getCartList: async () => {
-        const response = await axiosInstance.get('/cart');
+        const response = await axiosInstance.get('/carts');
         return response;
     },
     updateCartItem: async (data) => {
-        const response = await axiosInstance.put('/cart', data);
+        const response = await axiosInstance.put('/carts', data);
         return response;
     },
     deleteCartItem: async (cartId) => {
-        const response = await axiosInstance.delete(`/cart?cartId=${cartId}`);
+        const response = await axiosInstance.delete(`/carts?cartId=${cartId}`);
         return response;
     },
 };

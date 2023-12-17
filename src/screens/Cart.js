@@ -8,151 +8,141 @@ import {
   Pressable,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {memberApi, cartApi} from "../api/Api";
 import { priceToInt } from "../object/Object";
 import Button, { ButtonTypes } from "../component/PurchaseButton";
 import BasicButton from "../component/BasicButton";
 
-const Item = ({ item, quantity, price, index, onDelete, navigation}) => {
-  const [renderPrice, setRenderPrice] = useState(priceToInt(price) * item.quantity);
+import axios from "axios";
+import {cartApi} from "../api/Api";
+import memberApi from "../api/Api";
+
+const Item = ({ item, index, onDelete }) => {
+  const [renderPrice, setRenderPrice] = useState(priceToInt(item.price * item.count));
+  const [num, setNum] = useState(item.count);
   const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-  const setPlusValue = async () => {
-    try {
-      const newNum = item.quantity + 1;
-      const response = await cartApi.updateCartItem(item.index, newNum);
-      if (response.data.code === "1") {
-        setRenderPrice(priceToInt(item.price) * newNum);
-        item.quantity = newNum;
-      } else if(response.data.code === "13") {
-        await tokenUpdate(navigation);
-        await setPlusValue();
-      } else if (response.data.code === "30"){
-        console.error("존재하지 않는 장바구니 아이템입니다.");
-      } else {
-        console.error("알 수 없는 오류 발생.");
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  const setMinusValue = async () => {
-    try {
-      const newNum = item.quantity - 1;
-      const response = await cartApi.updateCartItem(item.index, newNum);
-      if (response.data.code === "1") {
-        setRenderPrice(priceToInt(item.price) * newNum);
-        item.quantity = newNum;
-      } else if(response.data.code === "13") {
-        await tokenUpdate(navigation);
-        await setMinusValue();
-      } else if (response.data.code === "30"){
-        console.error("존재하지 않는 장바구니 아이템입니다.");
-      } else {
-        console.error("알 수 없는 오류 발생.");
-      }
-    } catch (error) {
-      console.error(error);
-    }
+  useEffect(() => {
+    setNum(item.count);
+    setRenderPrice(priceToInt(item.price));
+  }, [item.count, item.price]);
+
+  if (num < 1) {
+    setNum(1);
+    setRenderPrice(priceToInt(item.price));
+    item.quantity = 1;
+  }
+  if (num > 10) {
+    setNum(10);
+    setRenderPrice(priceToInt(item.price) * 10);
+    item.quantity = 10;
+  }
+
+  const setPlusValue = () => {
+    setNum(prevNum => {
+      const newNum = prevNum + 1;
+      setRenderPrice(priceToInt(item.price) * newNum);
+      item.quantity = newNum;
+      return newNum;
+    });
   };
 
+  const setMinusValue = () => {
+    setNum(prevNum => {
+      const newNum = prevNum - 1;
+      setRenderPrice(priceToInt(item.price) * newNum);
+      item.quantity = newNum;
+      return newNum;
+    });
+  };
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        width: SCREEN_WIDTH,
-        justifyContent: "space-around",
-        borderWidth: 2,
-        borderRadius: 30,
-        marginBottom: 5,
-      }}
-    >
-      <View>
-        <Text style={{ fontSize: 20 }}>{"이름: " + item.name}</Text>
-        <Text style={{ fontSize: 20 }}>{"수량: " + item.quantity}</Text>
-        <Text style={{ fontSize: 20 }}>
-          {"기격: " + renderPrice.toLocaleString() + "원"}
-        </Text>
-      </View>
       <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
+          style={{
+            flexDirection: "row",
+            width: SCREEN_WIDTH,
+            justifyContent: "space-around",
+            borderWidth: 2,
+            borderRadius: 30,
+            marginBottom: 5,
+          }}
       >
-        <BasicButton
-          title="+"
-          onPress={setPlusValue}
-          style={styles.button}
-        ></BasicButton>
-        <BasicButton
-          title="-"
-          onPress={setMinusValue}
-          style={styles.button}
-        ></BasicButton>
-        <BasicButton
-          title="삭제"
-          onPress={() => onDelete(index)}
-          style={styles.button}
-        ></BasicButton>
+        <View>
+          <Text style={{ fontSize: 20 }}>{"이름: " + item.productName}</Text>
+          <Text style={{ fontSize: 20 }}>{"수량: " + item.count}</Text>
+          <Text style={{ fontSize: 20 }}>
+            {"가격: " + item.price.toLocaleString() + "원"}
+          </Text>
+        </View>
+        <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+        >
+          <BasicButton
+              title="+"
+              onPress={() => setPlusValue()}
+              style={styles.button}
+          ></BasicButton>
+          <BasicButton
+              title="-"
+              onPress={() => setMinusValue()}
+              style={styles.button}
+          ></BasicButton>
+          <BasicButton
+              title="삭제"
+              onPress={() => {
+                onDelete(index);
+              }}
+              style={styles.button}
+          ></BasicButton>
+        </View>
       </View>
-    </View>
   );
 };
 
 const Cart = ({ navigation }) => {
   const [items, setItems] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await cartApi.getCartList();
         if (response.data.code === "1") {
-          const cartItems = response.data.data;
+          const cartItems = response.data.data.map(item => ({
+            productName: item.productName,
+            count: item.count,
+            price: item.price,
+          }));
           setItems(cartItems);
         } else if(response.data.code === "13") {
-          await tokenUpdate(navigation);
-          await fetchData(false);
+          // await tokenUpdate(navigation);
+          // await fetchData();
         } else {
-          setErrorMessage("장바구니 목록 가져오기에 실패했습니다.");
-          setModalVisible(true);
+          console.log(response.data.code);
+          console.log(response);
+          // setErrorMessage("장바구니 목록 가져오기에 실패했습니다.");
+          // setModalVisible(true);
         }
         // const data = await AsyncStorage.getItem("cart");
         // const parsedData = data ? JSON.parse(data) : [];
         // setItems(parsedData);
       } catch (error) {
-        setErrorMessage("Failed to fetch cart items from the server");
-        setModalVisible(true);
+        console.log(error);
+        // setErrorMessage("Failed to fetch cart items from the server");
+        // setModalVisible(true);
       }
     };
+
     fetchData();
   }, []);
 
-  const handleDelete = async (index) => {
+  const handleDelete = async index => {
     try {
-      const response = await cartApi.deleteCartItem(items[index].index);
-      if (response.data.code === "1") {
-        const updatedItems = items.filter((_, itemIndex) => itemIndex !== index);
-        setItems(updatedItems);
-      }
-      else if (response.data.code === "13"){
-        await tokenUpdate(navigation);
-        await handleDelete(index);
-      }
-      else if (response.data.code === "30"){
-        setErrorMessage(response.data.message);
-        setModalVisible(true);
-      }
-      else {
-        setErrorMessage("알 수 없는 오류 발생");
-        setModalVisible(true);
-      }
-    } catch (error) {
-      console.error(error);
-      setErrorMessage("오류가 발생했습니다. 다시 시도해주세요.");
-      setModalVisible(true);
+      const updatedItems = items.filter((_, itemIndex) => itemIndex !== index);
+      setItems(updatedItems);
+      await AsyncStorage.setItem("cart", JSON.stringify(updatedItems));
+    } catch (e) {
+      console.log(e);
     }
   };
 
@@ -168,61 +158,37 @@ const Cart = ({ navigation }) => {
     totalPrice = 0;
   };
   return (
-    <View style={{ flex: 10 }}>
-      <ScrollView
-        contentContainerStyle={[styles.scrollViewContext]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.container}>
-          {items.map((item, index) => (
-            <Item
-              key={index}
-              item={item}
-              name={item.name}
-              index={index}
-              quantity={item.quantity}
-              price={item.price}
-              onDelete={handleDelete}
-            />
-          ))}
+      <View style={{ flex: 10 }}>
+        <ScrollView
+            contentContainerStyle={[styles.scrollViewContext]}
+            showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.container}>
+            {items.map((item, index) => (
+                <Item
+                    key={index}
+                    item={item}
+                    index={index}
+                    productName={item.productName}
+                    count={item.count}
+                    price={item.price}
+                    onDelete={handleDelete}
+                />
+            ))}
+          </View>
+        </ScrollView>
+        <View style={styles.puchaseButton}>
+          <Button
+              buttonType={ButtonTypes.BUY}
+              title="장바구니 상품 결제하기"
+              onPress={() => cartToPurchase()}
+              buttonStyle={styles.buyButton}
+              textStyle={styles.deviceText}
+              priceStyle={styles.priceText}
+          />
         </View>
-      </ScrollView>
-      <View style={styles.puchaseButton}>
-        <Button
-          buttonType={ButtonTypes.BUY}
-          title="장바구니 상품 결제하기"
-          onPress={() => cartToPurchase()}
-          buttonStyle={styles.buyButton}
-          textStyle={styles.deviceText}
-          priceStyle={styles.priceText}
-        />
       </View>
-    </View>
   );
-};
-const tokenUpdate = async (navigation) => {
-  try {
-    const accessToken = await AsyncStorage.getItem('access-token');
-    const refreshToken = await AsyncStorage.getItem('refresh-token');
-    const updateTokenResponse = await memberApi.reissue({
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    });
-    if (updateTokenResponse.data.code === "1") {
-      const newAccessToken = updateTokenResponse.data.data.accessToken;
-      const newRefreshToken = updateTokenResponse.data.data.refreshToken;
-
-      await AsyncStorage.setItem('access-token', newAccessToken);
-      await AsyncStorage.setItem('refresh-token', newRefreshToken);
-
-    } else if(updateTokenResponse.data.code === "13"){
-      console.error('토큰 업데이트 실패. 다시 로그인 부탁드립니다.');
-      await AsyncStorage.clear();
-      navigation.navigate("Login", {});
-    }
-  } catch (error) {
-    console.error(error);
-  }
 };
 const styles = StyleSheet.create({
   container: {
@@ -265,5 +231,4 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
 });
-
 export default Cart;
