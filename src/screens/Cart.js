@@ -41,6 +41,7 @@ const Item = ({ item, quantity, price, index, onDelete }) => {
       item.quantity = newNum;
       return newNum;
     });
+
   };
 
   const setMinusValue = () => {
@@ -119,33 +120,14 @@ const Cart = ({ navigation }) => {
 
   const handleDelete = async index => {
     try {
-      const response = await cartApi.deleteCartItem(items[index].cartId);
+      const response = await cartApi.deleteCartItem(items[index].index);
       if (response.data.code === "1") {
         const updatedItems = items.filter((_, itemIndex) => itemIndex !== index);
         setItems(updatedItems);
         await AsyncStorage.setItem("cart", JSON.stringify(updatedItems));
       }
       else if (response.data.code === "13"){
-        const accessToken = await AsyncStorage.getItem('access-token');
-        const refreshToken = await AsyncStorage.getItem('refresh-token');
-        const updateTokenResponse = await memberApi.reissue({
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-        });
-        if (updateTokenResponse.data.code === "1") {
-          const newAccessToken = updateTokenResponse.data.data.accessToken;
-          const newRefreshToken = updateTokenResponse.data.data.refreshToken;
-          await AsyncStorage.setItem('access-token', newAccessToken);
-          await AsyncStorage.setItem('refresh-token', newRefreshToken);
-
-          //장바구니 삭제하는 부분 다시 실행
-          const retryDeleteResponse = await cartApi.deleteCartItem(items[index].cartId);
-          if (retryDeleteResponse.data.code === "13") {
-            console.error('토큰 업데이트 실패. 다시 로그인 부탁드립니다.');
-            await AsyncStorage.clear();
-            navigation.navigate("Login", {});
-          }
-        }
+        await handleTokenUpdateAndRetryTask(index, "Delete");
       }
       else if (response.data.code === "30"){
         setErrorMessage(response.data.message);
@@ -158,6 +140,41 @@ const Cart = ({ navigation }) => {
     } catch (error) {
       console.error(error);
       setErrorMessage("오류가 발생했습니다. 다시 시도해주세요.");
+      setModalVisible(true);
+    }
+  };
+  const handleTokenUpdateAndRetryTask = async (index, task) => {
+    try {
+      const accessToken = await AsyncStorage.getItem('access-token');
+      const refreshToken = await AsyncStorage.getItem('refresh-token');
+      const updateTokenResponse = await memberApi.reissue({
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      });
+
+      if (updateTokenResponse.data.code === "1") {
+        const newAccessToken = updateTokenResponse.data.data.accessToken;
+        const newRefreshToken = updateTokenResponse.data.data.refreshToken;
+
+        await AsyncStorage.setItem('access-token', newAccessToken);
+        await AsyncStorage.setItem('refresh-token', newRefreshToken);
+
+        // 다시 실행
+        let retryResponse;
+        if (task === "Delete") {
+          retryResponse = await cartApi.deleteCartItem(items[index].index);
+        } else if (task === "Update") {
+          retryResponse = await cartApi.updateCartItem(items[index].index, items[index].quantity);
+        }
+        if (retryResponse && retryResponse.data.code === "13") {
+          console.error('토큰 업데이트 실패. 다시 로그인 부탁드립니다.');
+          await AsyncStorage.clear();
+          navigation.navigate("Login", {});
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("토큰 업데이트 중 오류가 발생했습니다.");
       setModalVisible(true);
     }
   };
