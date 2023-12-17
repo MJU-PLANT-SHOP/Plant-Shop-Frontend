@@ -48,7 +48,8 @@ const handleUserInfo = async () => {
         setuserPhoneNumber(response.data.data.phone);
     }
     } catch(error){
-
+      setfailModalVisible(true);
+      setfailreason("회원 정보를 불러오지 못했습니다.")
     }
   }
   const handlePurchase = async () => {
@@ -59,8 +60,8 @@ const handleUserInfo = async () => {
       "requirement": modalOutputRequire,
       "status": "COMPLETE_PAYMENT",
       "purchaseDetailList": products.map(product => ({
-        "productId": product.id,
-        "count": product.quantity
+      "productId": product.id,
+      "count": product.quantity
       }))
      });
     if (response.data.code ==="1"){
@@ -87,7 +88,6 @@ const handleUserInfo = async () => {
   const [userName, setuserName] = useState("1");
   const [userEmail, setuserEmail] = useState("1");
   const [userPhoneNumber, setuserPhoneNumber] = useState("1");
-
   const [requireModalVisible, setRequireModalVisible] = useState(false);
   const [buyModalVisible, setBuyModalVisible] = useState(false);
   const [failModalVisible, setfailModalVisible] = useState(false);
@@ -98,8 +98,6 @@ const handleUserInfo = async () => {
   const [modalOutputRequire, setModalOutputRequire] = useState("없음");
   const [deliverRequire, setDeliverRequire] = useState("없음");
   const [pickerValue, setPickerValue] = useState("1");
-
- 
   return (
       <View style={styles.container}>
         {/* 배송 요청사항 변경 Modal */}
@@ -182,7 +180,6 @@ const handleUserInfo = async () => {
             <View style={styles.buymodalTextConext}>
               <Text style={styles.modalTitle}>구매에 실패했습니다.</Text>
               <Text style={styles.modalTitle}>{failreason}</Text>
-
             </View>
             <Button
                 title="확인"
