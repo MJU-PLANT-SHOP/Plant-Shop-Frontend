@@ -44,11 +44,20 @@ const memberApi = {
     const response = await axiosInstance.get(`/members/check-email?email=${email}`);
     return response;
   }
+  
+
 }
 export default memberApi;
 
 // 장바구니 API
 
 // 주문 API
+const purchaseApi = {
+  tryPurchase: async (data) => {
+    const response = await axiosInstance.post('/purchase/trypurchase', data);
+    return response;
+  }
+}
+export {purchaseApi};
 
 // 상품 API

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "react-native-modal";
 import {
   View,
@@ -11,8 +11,10 @@ import {
 } from "react-native";
 import Button, { ButtonTypes } from "../component/PurchaseButton";
 import { Picker } from "@react-native-picker/picker";
-import { loginUserList } from "./Login";
+// import { loginUserList } from "./Login";
 import axios from "axios";
+import {purchaseApi} from "../api/Api";
+import memberApi from "../api/Api";
 // import { Pressable } from "react-native-web";
 
 export let purchaseCount = 0;
@@ -32,16 +34,37 @@ const Purchase = ({ route, navigation }) => {
       location: "경비실에 맡겨주세요",
     },
   ];
+  useEffect(() => {
+    handleUserInfo();
+  }, []);
+const handleUserInfo = async () => {
+    try {
+     const response = await memberApi.getMyInfo({
+     });
+    if (response.data.code ==="1"){
+        setuserAddress(response.data.data.address);
+        setuserName(response.data.data.name);
+        setuserEmail(response.data.data.email);
+        setuserPhoneNumber(response.data.data.phone);
+    }
+    } catch(error){
+
+    }
+  }
   const products = route.params.object;
   const price = route.params.price;
-  const userInfo = loginUserList[0];
+  const [userAddress, setuserAddress] = useState("1");
+  const [userName, setuserName] = useState("1");
+  const [userEmail, setuserEmail] = useState("1");
+  const [userPhoneNumber, setuserPhoneNumber] = useState("1");
+
   const [requireModalVisible, setRequireModalVisible] = useState(false);
   const [buyModalVisible, setBuyModalVisible] = useState(false);
   const [failModalVisible, setfailModalVisible] = useState(false);
   const [failreason, setfailreason] = useState("00");
-  const [modalOutputAddress, setModalOutputAddress] = useState(
-      userInfo.address
-  );
+  // const [modalOutputAddress, setModalOutputAddress] = useState(
+  //     userAddress
+  // );
   const [modalOutputLocation, setModalOutputLocation] = useState(
       pickupLocations[0].location
   );
@@ -49,6 +72,7 @@ const Purchase = ({ route, navigation }) => {
   const [deliverRequire, setDeliverRequire] = useState("없음");
   const [pickerValue, setPickerValue] = useState("1");
 
+ 
   return (
       <View style={styles.container}>
         {/* 배송 요청사항 변경 Modal */}
@@ -161,7 +185,7 @@ const Purchase = ({ route, navigation }) => {
                   textStyle={styles.ChangeButtonTitle}
                 /> */}
                 </View>
-                <Text style={styles.menuTitle}>{modalOutputAddress}</Text>
+                <Text style={styles.menuTitle}>{userAddress}</Text>
               </View>
             </View>
             {/* 배송 요청사항 */}
@@ -195,19 +219,19 @@ const Purchase = ({ route, navigation }) => {
                 <View style={styles.menu}>
                   <Text style={styles.menuTitle}>주문자명</Text>
                   <Text style={[styles.userChoice, { marginLeft: 23 }]}>
-                    {userInfo.name}
+                    {userName}
                   </Text>
                 </View>
                 <View style={styles.menu}>
                   <Text style={styles.menuTitle}>연락처</Text>
                   <Text style={[styles.userChoice, { marginLeft: 42 }]}>
-                    {userInfo.phoneNumber}
+                    {userPhoneNumber}
                   </Text>
                 </View>
                 <View style={styles.menu}>
                   <Text style={styles.menuTitle}>이메일</Text>
                   <Text style={[styles.userChoice, { marginLeft: 43 }]}>
-                    {userInfo.email}
+                    {userEmail}
                   </Text>
                 </View>
               </View>
@@ -257,21 +281,16 @@ const Purchase = ({ route, navigation }) => {
               price={price.toLocaleString() + "원"}
               title="결제하기"
               onPress={() => {
-                axios.post('http://localhost:8080/api/purchase/trypurchase', {
-                      "deliveryAddress": modalOutputAddress,
+                const response = memberApi.tryPurchase({
+                      "deliveryAddress": userAddress,
                       "pickUpLocation": modalOutputLocation,
                       "requirement": modalOutputRequire,
                       "status": "COMPLETE_PAYMENT",
                       "purchaseDetailList": products.map(product => ({
-                        "productId": product.id,
-                        "count": product.quantity
-                      })),
-                    },
-                    {
-                      headers: {
-                        Authorization: token
-                      }
-                    })
+                      "productId": product.id,
+                      "count": product.quantity
+                      }))
+                })
                     .then(function (response) {
                       console.log("buy!");
                       setBuyModalVisible(true);
