@@ -51,6 +51,36 @@ const handleUserInfo = async () => {
 
     }
   }
+  const handlePurchase = async () => {
+    try {
+     const response = await purchaseApi.tryPurchase({
+      "deliveryAddress": userAddress,
+      "pickUpLocation": modalOutputLocation,
+      "requirement": modalOutputRequire,
+      "status": "COMPLETE_PAYMENT",
+      "purchaseDetailList": products.map(product => ({
+        "productId": product.id,
+        "count": product.quantity
+      }))
+     });
+    if (response.data.code ==="1"){
+      console.log("buy!");
+      setBuyModalVisible(true);
+      console.log(response);
+    } else{
+      console.log("error")
+      console.log(products)
+      setfailModalVisible(true);
+      setfailreason(error.response)
+      console.log(error);
+    }
+    } catch(error){
+      console.log(products)
+      setfailModalVisible(true);
+      setfailreason(error.response)
+      console.log(error);
+    }
+  }
   const products = route.params.object;
   const price = route.params.price;
   const [userAddress, setuserAddress] = useState("1");
@@ -62,9 +92,6 @@ const handleUserInfo = async () => {
   const [buyModalVisible, setBuyModalVisible] = useState(false);
   const [failModalVisible, setfailModalVisible] = useState(false);
   const [failreason, setfailreason] = useState("00");
-  // const [modalOutputAddress, setModalOutputAddress] = useState(
-  //     userAddress
-  // );
   const [modalOutputLocation, setModalOutputLocation] = useState(
       pickupLocations[0].location
   );
@@ -280,28 +307,7 @@ const handleUserInfo = async () => {
               buttonType={ButtonTypes.BUY}
               price={price.toLocaleString() + "원"}
               title="결제하기"
-              onPress={() => {
-                const response = memberApi.tryPurchase({
-                      "deliveryAddress": userAddress,
-                      "pickUpLocation": modalOutputLocation,
-                      "requirement": modalOutputRequire,
-                      "status": "COMPLETE_PAYMENT",
-                      "purchaseDetailList": products.map(product => ({
-                      "productId": product.id,
-                      "count": product.quantity
-                      }))
-                })
-                    .then(function (response) {
-                      console.log("buy!");
-                      setBuyModalVisible(true);
-                      console.log(response);
-                    })
-                    .catch(function (error) {
-                      setfailModalVisible(true);
-                      setfailreason(error.response)
-                      console.log(error);
-                    });
-              }}
+              onPress={handlePurchase}
               buttonStyle={styles.buyButton}
               textStyle={styles.deviceText}
               priceStyle={styles.priceText}
