@@ -127,7 +127,7 @@ const Cart = ({ navigation }) => {
   let totalPrice = 0;
   const cartToPurchase = () => {
     for (let i = 0; i < items.length; i++) {
-      totalPrice = totalPrice + priceToInt(items[i].price) * items[i].quantity;
+      totalPrice = totalPrice + items[i].price * items[i].count;
     }
     navigation.navigate("purchase", {
       object: items,
