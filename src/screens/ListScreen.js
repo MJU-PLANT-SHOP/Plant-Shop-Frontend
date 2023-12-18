@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   SafeAreaView,
@@ -22,27 +22,42 @@ import {
 } from "../object/Object";
 import cart from "./Cart";
 import IconButton from "../component/IconButton";
+import { productApi } from "../api/Api";
+import { ActivityIndicator } from "react-native";
+import { Colors } from "react-native/Libraries/NewAppScreen";
+
 const width = Dimensions.get("window").width / 2 - 30;
 
 const ListScreen = ({ navigation, route }) => {
-  const [categoryIndex, setCategoryIndex] = React.useState(0);
-  const [categoryItem, setCategoryItem] = React.useState(popular);
-  const categories = ["추천", "선인장", "정화식물", "분재", "꽃"];
-  const { itemId } = route.params;
-  useEffect(() => {
-    setCategoryIndex(itemId);
-    if (itemId === 0) {
-      setCategoryItem(popular);
-    } else if (itemId === 1) {
-      setCategoryItem(cactus);
-    } else if (itemId === 2) {
-      setCategoryItem(airPurifyPlantes);
-    } else if (itemId === 3) {
-      setCategoryItem(pot);
-    } else if (itemId === 4) {
-      setCategoryItem(flower);
+  const [categoryIndex, setCategoryIndex] = useState(0);
+  const [categoryItem, setCategoryItem] = useState([]);
+  const categories = ["선인장", "정화식물", "분재", "꽃"];
+  const { productId, category } = route.params;
+
+  const fetchProductList = async category => {
+    try {
+      const response = await productApi.getProductList(category);
+      if (response.data.code === "1") {
+        setCategoryItem(response.data.data);
+        console.log(response.data.data[0].id);
+      } else if (response.data.code === "13") {
+        await memberApi.reissue();
+        navigation.navigate("listScreen", {
+          productId: productId,
+          category: category,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage("오류가 발생했습니다. 다시 시도해주세요.");
+      setModalVisible(true);
     }
-  });
+  };
+
+  useEffect(() => {
+    setCategoryIndex(productId);
+    fetchProductList(category);
+  }, [productId]);
 
   const CategoryList = () => {
     return (
@@ -53,15 +68,25 @@ const ListScreen = ({ navigation, route }) => {
             activeOpacity={0.8}
             onPress={() => {
               if (index === 0) {
-                navigation.navigate("listScreen", { itemId: index });
+                navigation.navigate("listScreen", {
+                  productId: index,
+                  category: "CACTUS",
+                });
               } else if (index === 1) {
-                navigation.navigate("listScreen", { itemId: index });
+                navigation.navigate("listScreen", {
+                  productId: index,
+                  category: "AIR_PURITY_PLANT",
+                });
               } else if (index === 2) {
-                navigation.navigate("listScreen", { itemId: index });
+                navigation.navigate("listScreen", {
+                  productId: index,
+                  category: "POT",
+                });
               } else if (index === 3) {
-                navigation.navigate("listScreen", { itemId: index });
-              } else if (index === 4) {
-                navigation.navigate("listScreen", { itemId: index });
+                navigation.navigate("listScreen", {
+                  productId: index,
+                  category: "FLOWER",
+                });
               }
             }}
           >
@@ -80,44 +105,22 @@ const ListScreen = ({ navigation, route }) => {
   };
 
   const Card = ({ plant }) => {
+    const imageUrl = plant.imageUrl;
+    console.log(imageUrl);
     return (
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => navigation.navigate("상품 페이지", { object: plant })}
+        onPress={() =>
+          navigation.navigate("상품 페이지", { productId: plant.id })
+        }
       >
         <View style={style.card}>
-          <View style={{ alignItems: "flex-end" }}>
-            <View
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: 20,
-                justifyContent: "center",
-                alignItems: "center",
-                backgroundColor: plant.like
-                  ? "rgba(245, 42, 42,0.2)"
-                  : "rgba(0,0,0,0.2)",
-              }}
-            >
-              <Icon
-                name="favorite"
-                size={19}
-                color={plant.like ? COLORS.red : COLORS.dark}
-              />
-            </View>
-          </View>
-
-          <View
+          <Image
+            source={{ uri: imageUrl }}
             style={{
-              height: 100,
-              alignItems: "center",
+              flex: 1,
             }}
-          >
-            <Image
-              source={plant.image[0]}
-              style={{ flex: 1, resizeMode: "contain" }}
-            />
-          </View>
+          />
           <Text
             style={{
               fontWeight: "bold",
@@ -157,7 +160,6 @@ const ListScreen = ({ navigation, route }) => {
         <IconButton
           onPress={() => navigation.navigate("장바구니")}
         ></IconButton>
-
       </View>
       <CategoryList />
       <FlatList
@@ -195,7 +197,7 @@ const style = StyleSheet.create({
   card: {
     height: 225,
     backgroundColor: COLORS.light,
-    width,
+    width: width / 1.08,
     marginHorizontal: 2,
     marginRight: 10,
     marginLeft: 10,

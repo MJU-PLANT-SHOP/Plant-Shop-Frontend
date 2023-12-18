@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "react-native-modal";
 import {
   View,
@@ -11,7 +11,10 @@ import {
 } from "react-native";
 import Button, { ButtonTypes } from "../component/PurchaseButton";
 import { Picker } from "@react-native-picker/picker";
-import { loginUserList } from "./Login";
+// import { loginUserList } from "./Login";
+import axios from "axios";
+import { purchaseApi } from "../api/Api";
+import memberApi from "../api/Api";
 // import { Pressable } from "react-native-web";
 
 export let purchaseCount = 0;
@@ -31,15 +34,63 @@ const Purchase = ({ route, navigation }) => {
       location: "경비실에 맡겨주세요",
     },
   ];
-  const totalPrice = "14,000";
+  useEffect(() => {
+    handleUserInfo();
+  }, []);
+  const handleUserInfo = async () => {
+    try {
+      const response = await memberApi.getMyInfo({});
+      if (response.data.code === "1") {
+        setuserAddress(response.data.data.address);
+        setuserName(response.data.data.name);
+        setuserEmail(response.data.data.email);
+        setuserPhoneNumber(response.data.data.phone);
+      }
+    } catch (error) {
+      setfailModalVisible(true);
+      setfailreason("회원 정보를 불러오지 못했습니다.");
+    }
+  };
+  const handlePurchase = async () => {
+    try {
+      const response = await purchaseApi.tryPurchase({
+        deliveryAddress: userAddress,
+        pickUpLocation: modalOutputLocation,
+        requirement: modalOutputRequire,
+        status: "COMPLETE_PAYMENT",
+        purchaseDetailList: products.map(product => ({
+          productId: product.id,
+          count: product.quantity,
+        })),
+      });
+      if (response.data.code === "1") {
+        console.log("buy!");
+        setBuyModalVisible(true);
+        console.log(response);
+      } else {
+        console.log("error");
+        console.log(products);
+        setfailModalVisible(true);
+        setfailreason(error.response);
+        console.log(error);
+      }
+    } catch (error) {
+      console.log(products);
+      setfailModalVisible(true);
+      setfailreason(error.response);
+      console.log(error);
+    }
+  };
   const products = route.params.object;
   const price = route.params.price;
-  const userInfo = loginUserList[0];
+  const [userAddress, setuserAddress] = useState("1");
+  const [userName, setuserName] = useState("1");
+  const [userEmail, setuserEmail] = useState("1");
+  const [userPhoneNumber, setuserPhoneNumber] = useState("1");
   const [requireModalVisible, setRequireModalVisible] = useState(false);
   const [buyModalVisible, setBuyModalVisible] = useState(false);
-  const [modalOutputAddress, setModalOutputAddress] = useState(
-    userInfo.address
-  );
+  const [failModalVisible, setfailModalVisible] = useState(false);
+  const [failreason, setfailreason] = useState("00");
   const [modalOutputLocation, setModalOutputLocation] = useState(
     pickupLocations[0].location
   );
@@ -57,10 +108,11 @@ const Purchase = ({ route, navigation }) => {
       >
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>배송 요청사항</Text>
-          <View style={styles.modalMenu}>
+          <View style={[styles.modalMenu, { height: "20%" }]}>
             <Text style={styles.menuTitle}>수령 위치</Text>
             <Picker
-              style={styles.modalLockationPiker}
+              style={{ width: 250 }}
+              itemStyle={{ height: 44 }}
               selectedValue={pickerValue}
               onValueChange={item => {
                 setPickerValue(item);
@@ -118,6 +170,28 @@ const Purchase = ({ route, navigation }) => {
           />
         </View>
       </Modal>
+      <Modal
+        isVisible={failModalVisible}
+        useNativeDriver={true}
+        hideModalContentWhileAnimating={true}
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      >
+        <View style={styles.buymodalContainer}>
+          <View style={styles.buymodalTextConext}>
+            <Text style={styles.modalTitle}>구매에 실패했습니다.</Text>
+            <Text style={styles.modalTitle}>{failreason}</Text>
+          </View>
+          <Button
+            title="확인"
+            onPress={() => {
+              setfailModalVisible(false);
+              navigation.navigate("HomePageScreen", {});
+            }}
+            buttonStyle={styles.buymodalButtonFrame}
+            textStyle={styles.deviceText}
+          />
+        </View>
+      </Modal>
       {/* 메인 화면 */}
       <ScrollView>
         <View style={styles.purchasePay}>
@@ -135,7 +209,7 @@ const Purchase = ({ route, navigation }) => {
                   textStyle={styles.ChangeButtonTitle}
                 /> */}
               </View>
-              <Text style={styles.menuTitle}>{modalOutputAddress}</Text>
+              <Text style={styles.menuTitle}>{userAddress}</Text>
             </View>
           </View>
           {/* 배송 요청사항 */}
@@ -148,7 +222,7 @@ const Purchase = ({ route, navigation }) => {
                   onPress={() => {
                     setRequireModalVisible(true);
                   }}
-                  buttonStyle={[styles.ChangeButtonFrame, { marginLeft: 105 }]}
+                  buttonStyle={[styles.ChangeButtonFrame, { marginLeft: 85 }]}
                   textStyle={styles.ChangeButtonTitle}
                 />
               </View>
@@ -169,19 +243,19 @@ const Purchase = ({ route, navigation }) => {
               <View style={styles.menu}>
                 <Text style={styles.menuTitle}>주문자명</Text>
                 <Text style={[styles.userChoice, { marginLeft: 23 }]}>
-                  {userInfo.name}
+                  {userName}
                 </Text>
               </View>
               <View style={styles.menu}>
                 <Text style={styles.menuTitle}>연락처</Text>
                 <Text style={[styles.userChoice, { marginLeft: 42 }]}>
-                  {userInfo.phoneNumber}
+                  {userPhoneNumber}
                 </Text>
               </View>
               <View style={styles.menu}>
                 <Text style={styles.menuTitle}>이메일</Text>
                 <Text style={[styles.userChoice, { marginLeft: 43 }]}>
-                  {userInfo.email}
+                  {userEmail}
                 </Text>
               </View>
             </View>
@@ -197,7 +271,6 @@ const Purchase = ({ route, navigation }) => {
                     <Pressable
                       onPress={() => {
                         console.log("image!");
-
                         navigation.navigate("상품 페이지", {
                           object: product,
                         });
@@ -231,10 +304,7 @@ const Purchase = ({ route, navigation }) => {
           buttonType={ButtonTypes.BUY}
           price={price.toLocaleString() + "원"}
           title="결제하기"
-          onPress={() => {
-            console.log("buy!");
-            setBuyModalVisible(true);
-          }}
+          onPress={handlePurchase}
           buttonStyle={styles.buyButton}
           textStyle={styles.deviceText}
           priceStyle={styles.priceText}
@@ -430,7 +500,7 @@ const styles = StyleSheet.create({
   },
   modalLockationPiker: {
     width: "100%",
-    height: "20%",
+    height: "1%",
   },
   modalRequireInput: {
     width: "100%",
