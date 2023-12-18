@@ -68,8 +68,12 @@ const Item = ({ item, index, onDelete, navigation }) => {
           "count": newNum,
         });
         if (response.data.code === "1") {
-          setRenderPrice(item.price * newNum);
-          item.count = newNum;
+          setNum(prevNum => {
+            const nNum = prevNum + 1;
+            setRenderPrice(item.price * nNum);
+            item.count = nNum;
+            return nNum;
+          });
         } else if (response.data.code === "13") {
           await tokenUpdate(navigation);
           await setPlusValue();
@@ -92,8 +96,12 @@ const Item = ({ item, index, onDelete, navigation }) => {
           "count": newNum,
         });
         if (response.data.code === "1") {
-          setRenderPrice(item.price * newNum);
-          item.count = newNum;
+          setNum(prevNum => {
+            const nNum = prevNum - 1;
+            setRenderPrice(item.price * nNum);
+            item.count = nNum;
+            return nNum;
+          });
         } else if (response.data.code === "13") {
           await tokenUpdate(navigation);
           await setMinusValue();
@@ -120,9 +128,9 @@ const Item = ({ item, index, onDelete, navigation }) => {
       >
         <View>
           <Text style={{ fontSize: 20 }}>{"이름: " + item.productName}</Text>
-          <Text style={{ fontSize: 20 }}>{"수량: " + item.count}</Text>
+          <Text style={{ fontSize: 20 }}>{"수량: " + num}</Text>
           <Text style={{ fontSize: 20 }}>
-            {"가격: " + (item.price*item.count).toLocaleString() + "원"}
+            {"가격: " + renderPrice.toLocaleString() + "원"}
           </Text>
         </View>
         <View

@@ -18,6 +18,7 @@ import FooterButton from "../component/FooterButton";
 import BasicButton from "../component/BasicButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { priceToInt, products } from "../object/Object";
+import {cartApi} from "../api/Api";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -390,67 +391,44 @@ const ProductScreen = ({ route, navigation }) => {
                                         style={styles.modalButton}
                                         title="장바구니 담기"
                                         onPress={async () => {
-                                            productObject.quantity = productNum;
-                                            let data = productObject;
-
-                                            const currentItems = await AsyncStorage.getItem("cart");
-                                            let updatedItems = currentItems
-                                                ? JSON.parse(currentItems)
-                                                : [];
-
-                                            let existsInCart = updatedItems.some(item => {
-                                                return item.id == productObject.id;
-                                            });
-
-                                            if (existsInCart) {
-                                                Alert.alert(
-                                                    "",
-                                                    "상품이 이미 장바구니에 존재합니다. 장바구니 페이지로 이동 하시겠습니까?",
-                                                    [
-                                                        {
-                                                            text: "OK",
-                                                            onPress: () => {
-                                                                navigation.navigate("장바구니");
+                                            try{
+                                                console.log("productObject:", productObject);
+                                                console.log("productObject.id:", productObject.id);
+                                                console.log("count:", productNum);
+                                                const response = await cartApi.addToCart({
+                                                    //productId 가져오는 걸 API에서 가져오는 걸로 수정?
+                                                    // 현재 Object에서 가져오는데, object의 id는 0부터 시작, 백엔드는 1부터 시작
+                                                    productId: productObject.id+1,
+                                                    count: productNum,
+                                                });
+                                                if (response.data.code === "1") {
+                                                    Alert.alert(
+                                                        "",
+                                                        "상품이 장바구니에 담겼습니다. 장바구니 페이지로 이동 하시겠습니까?",
+                                                        [
+                                                            {
+                                                                text: "OK",
+                                                                onPress: () => {
+                                                                    navigation.navigate("장바구니");
+                                                                },
                                                             },
-                                                        },
-                                                        {
-                                                            text: "NO",
-                                                            onPress: () => {
-                                                                setCartModalVisible(false);
+                                                            {
+                                                                text: "NO",
+                                                                onPress: () => {
+                                                                    setCartModalVisible(false);
+                                                                },
                                                             },
-                                                        },
-                                                    ]
-                                                );
-                                                setCartModalVisible(false);
-                                            } else {
-                                                let updatedItems = currentItems
-                                                    ? JSON.parse(currentItems)
-                                                    : [];
-                                                updatedItems = [...updatedItems, data];
-                                                await AsyncStorage.setItem(
-                                                    "cart",
-                                                    JSON.stringify(updatedItems)
-                                                );
-                                                Alert.alert(
-                                                    "",
-                                                    "상품이 장바구니에 담겼습니다. 장바구니 페이지로 이동 하시겠습니까?",
-                                                    [
-                                                        {
-                                                            text: "OK",
-                                                            onPress: () => {
-                                                                navigation.navigate("장바구니");
-                                                            },
-                                                        },
-                                                        {
-                                                            text: "NO",
-                                                            onPress: () => {
-                                                                setCartModalVisible(false);
-                                                            },
-                                                        },
-                                                    ]
-                                                );
+                                                        ]
+                                                    );
+                                                } else if (response.data.code === "13") {
+                                                    console.error("토큰 업데이트 필요.");
+                                                    // await tokenUpdate();
+                                                } else {
+                                                    console.error("장바구니에 상품을 추가하는데 실패했습니다.");
+                                                }
+                                            } catch (error) {
+                                                console.error(error);
                                             }
-
                                             setCartModalVisible(false);
                                             setProductNum(0);
                                         }}
