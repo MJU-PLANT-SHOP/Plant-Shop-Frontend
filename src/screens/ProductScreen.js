@@ -46,6 +46,11 @@ const ProductScreen = ({ route, navigation }) => {
       if (response.data.code === "1") {
         const newProductObject = new ProductObject(response.data.data);
         setProductObject(newProductObject);
+      } else if (response.data.code === "13") {
+        await memberApi.reissue();
+        navigation.navigate("상품 페이지", {
+          productId: productId,
+        });
       }
     } catch (error) {
       console.error(error);

@@ -21,6 +21,8 @@ import IconButton from "../component/IconButton";
 import IconMenuButton from "../component/IconMenuButton";
 import IconMyPageButton from "../component/IconMypageButton";
 import { productApi } from "../api/Api";
+import memberApi from "../api/Api";
+
 import { useState, useEffect } from "react";
 import { ActivityIndicator } from "react-native";
 
@@ -38,6 +40,9 @@ const Home = ({ navigation }) => {
         if (response.data.code === "1") {
           console.log(response.data.data);
           setSecondProductList(response.data.data);
+        } else if (response.data.code === "13") {
+          await memberApi.reissue();
+          navigation.navigate("HomePageScreen");
         }
       } catch (error) {
         console.error(error);
