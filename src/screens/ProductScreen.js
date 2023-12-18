@@ -18,7 +18,7 @@ import FooterButton from "../component/FooterButton";
 import BasicButton from "../component/BasicButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { priceToInt, products } from "../object/Object";
-import productApi from "../api/ProductApi";
+import { productApi } from "../api/Api";
 import { func } from "prop-types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");

@@ -20,7 +20,7 @@ import {
 import IconButton from "../component/IconButton";
 import IconMenuButton from "../component/IconMenuButton";
 import IconMyPageButton from "../component/IconMypageButton";
-import productApi from "../api/ProductApi";
+import { productApi } from "../api/Api";
 import { useState, useEffect } from "react";
 import { ActivityIndicator } from "react-native";
 
