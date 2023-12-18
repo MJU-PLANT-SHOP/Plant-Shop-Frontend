@@ -148,7 +148,7 @@ const Home = ({ navigation }) => {
                 style={{
                   color: COLORS.white,
                   justifyContent: "flex-start",
-                  marginRight: 230,
+                  marginRight: 210,
                 }}
               >
                 새로운 식물

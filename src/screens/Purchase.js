@@ -53,52 +53,53 @@ const Purchase = ({ route, navigation }) => {
   };
   const handlePurchase = async () => {
     console.log(products);
-    // try {
-    //   console.log(products);
-    //   const response = await purchaseApi.tryPurchase({
-    //     deliveryAddress: userAddress,
-    //     pickUpLocation: modalOutputLocation,
-    //     requirement: modalOutputRequire,
-    //     status: "COMPLETE_PAYMENT",
-    //     purchaseDetailList: products.map(product => ({
-    //       productId: product.id,
-    //       count: product.count,
-    //     })),
-    //   });
-    //   if (response.data.code === "1") {
-    //     console.log("buy!");
-    //     setBuyModalVisible(true);
-    //     console.log(response);
-    //   } else {
-    //     console.log("error");
-    //     console.log(products);
-    //     setfailModalVisible(true);
-    //     setfailreason(error.response);
-    //     console.log(error);
-    //   }
-    // } catch (error) {
-    //   console.log(products);
-    //   setfailModalVisible(true);
-    //   setfailreason(error.response);
-    //   console.log(error);
-    // }
-  };
-  useEffect(() => {
-    const fetchData = async () => {
-      if(route.params.object){
-        await setProducts(route.params.object);
-        await handleUserInfo();
+    try {
+      console.log(products);
+      const response = await purchaseApi.tryPurchase({
+        deliveryAddress: userAddress,
+        pickUpLocation: modalOutputLocation,
+        requirement: modalOutputRequire,
+        status: "COMPLETE_PAYMENT",
+        purchaseDetailList: products.map(product => ({
+          productId: product.productId,
+          count: product.count,
+        })),
+      });
+      if (response.data.code === "1") {
+        console.log("buy!");
+        setBuyModalVisible(true);
+        console.log(response);
+      } else {
+        console.log("error");
+        console.log(products);
+        setfailModalVisible(true);
+        setfailreason(error.response);
+        console.log(error);
       }
+    } catch (error) {
+      console.log(products);
+      setfailModalVisible(true);
+      setfailreason(error.response);
+      console.log(error);
     }
-    fetchData();
-  }, [route.params.object]);
+  };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if(route.params.object){
+  //       await setProducts(route.params.object);
+  //       await handleUserInfo();
+  //     }
+  //   }
+  //   fetchData();
+  // }, [route.params.object]);
 
-  useEffect(() => {
-    console.log(products[0].name); // 확인용 콘솔 출력
-    console.log(products); // 확인용 콘솔 출력
-  }, [products]);
+  // useEffect(() => {
+  //   console.log(products[0].name); // 확인용 콘솔 출력
+  //   console.log(products); // 확인용 콘솔 출력
+  // }, [products]);
 
-  const [products, setProducts] = useState([]);
+  // const [products, setProducts] = useState([]);
+  const products = Array.isArray(route.params.object) ? route.params.object : [route.params.object];
   const price = route.params.price;
   const [userAddress, setuserAddress] = useState("1");
   const [userName, setuserName] = useState("1");
@@ -283,30 +284,32 @@ const Purchase = ({ route, navigation }) => {
               <Text style={styles.frameTitle}>주문 상품</Text>
               {/* 상품 리스트 */}
               <View style={styles.itemList}>
-                <Text style={styles.itemTitle}>{products[0].name}</Text>
-                {/*<ScrollView horizontal={true} style={styles.itemScrollView}>*/}
-                {/*  {products.map(product => (*/}
-                {/*    // <Pressable*/}
-                {/*    //   onPress={() => {*/}
-                {/*    //     console.log("image!");*/}
-                {/*    //     navigation.navigate("상품 페이지", {*/}
-                {/*    //       object: product,*/}
-                {/*    //     });*/}
-                {/*    //   }}*/}
-                {/*    // >*/}
-                {/*      <View style={styles.item}>*/}
-                {/*        <Image*/}
-                {/*          source={{uri:product.imageUrl}}*/}
-                {/*          style={styles.itemImage}*/}
-                {/*        />*/}
-                {/*        <Text style={styles.itemTitle}>{product.name}</Text>*/}
-                {/*        <Text style={styles.itemInfo}>*/}
-                {/*          {product.price * product.count}원*/}
-                {/*        </Text>*/}
-                {/*      </View>*/}
-                {/*    // </Pressable>*/}
-                {/*  ))}*/}
-                {/*</ScrollView>*/}
+                {/* <Text style={styles.itemTitle}>{products[0].name}</Text> */}
+                <ScrollView horizontal={true} style={styles.itemScrollView}>
+                {Array.isArray(products) && products.map(product => (
+                      <Pressable
+                        // key={product.id}
+                        // onPress={() => {
+                        //   console.log("이미지 클릭!");
+                        //   navigation.navigate("purchase", {
+                        //     object: product,
+                        //     price: product.price * product.count,
+                        //   });
+                        // }}
+                      >
+                        <View style={styles.item}>
+                          <Image
+                            source={{ uri: product.imageUrl }}
+                            style={styles.itemImage}
+                          />
+                          <Text style={styles.itemTitle}>{product.productName}</Text>
+                          <Text style={styles.itemInfo}>
+                            {product.price * product.count}원
+                          </Text>
+                        </View>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
               </View>
               {/* 상품 총 가격 */}
               <Text style={styles.priceInProduct}>

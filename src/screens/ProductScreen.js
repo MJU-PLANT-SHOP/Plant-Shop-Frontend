@@ -31,9 +31,9 @@ const ProductScreen = ({ route, navigation }) => {
 
     class ProductObject {
         constructor(data) {
-            this.id = data.id;
+            this.productId = data.id;
             this.category = data.category;
-            this.name = data.name;
+            this.productName = data.name;
             this.price = data.price;
             this.size = data.size;
             this.description = data.description;
