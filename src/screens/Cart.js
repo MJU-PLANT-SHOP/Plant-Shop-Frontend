@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { priceToInt } from "../object/Object";
 import Button, { ButtonTypes } from "../component/PurchaseButton";
 import BasicButton from "../component/BasicButton";
+import { getImageUrlByProductId } from "./ProductScreen";
 
 import axios from "axios";
 import {cartApi} from "../api/Api";
@@ -19,14 +20,23 @@ const fetchData = async (setItems, navigation) => {
   try {
     const response = await cartApi.getCartList();
     if (response.data.code === "1") {
-      const cartItems = response.data.data.map(item => ({
-        productId: item.productId,
-        productName: item.productName,
-        count: item.count,
-        price: item.price,
-      }));
+      const cartItems = await Promise.all(
+        response.data.data.map(async (item) => {
+          // getImageUrlByProductId를 사용하여 이미지 URL을 가져옵니다.
+          const imageUrl = await getImageUrlByProductId(item.productId);
+          // console.log(imageUrl)
+          return {
+            productId: item.productId,
+            productName: item.productName,
+            count: item.count,
+            price: item.price,
+            imageUrl: imageUrl,
+          };
+        })
+      );
+
       setItems(cartItems);
-    } else if(response.data.code === "13") {
+    } else if (response.data.code === "13") {
       await tokenUpdate(navigation);
       await fetchData();
     } else {
