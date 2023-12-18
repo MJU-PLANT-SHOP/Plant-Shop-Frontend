@@ -156,6 +156,10 @@ const Home = ({ navigation }) => {
               >
                 새로운 식물
               </Text>
+              <IconButton
+                style={{ justifyContent: "flex-end" }}
+                onPress={() => navigation.navigate("장바구니")}
+              ></IconButton>
               <IconMyPageButton
                 style={{ justifyContent: "flex-end" }}
                 onPress={() => navigation.navigate("Mypage")}
