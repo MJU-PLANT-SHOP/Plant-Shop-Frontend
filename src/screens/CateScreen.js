@@ -153,7 +153,7 @@ const CateScreen = ({ navigation }) => {
         }}
         onPress={() =>
           navigation.navigate("listScreen", {
-            itemId: item.id,
+            productId: item.id,
             category: item.category,
           })
         }

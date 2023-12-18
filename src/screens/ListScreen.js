@@ -32,7 +32,7 @@ const ListScreen = ({ navigation, route }) => {
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [categoryItem, setCategoryItem] = useState([]);
   const categories = ["선인장", "정화식물", "분재", "꽃"];
-  const { itemId, category } = route.params;
+  const { productId, category } = route.params;
 
   const fetchProductList = async category => {
     try {
@@ -40,6 +40,12 @@ const ListScreen = ({ navigation, route }) => {
       if (response.data.code === "1") {
         setCategoryItem(response.data.data);
         console.log(response.data.data[0].id);
+      } else if (response.data.code === "13") {
+        await memberApi.reissue();
+        navigation.navigate("listScreen", {
+          productId: productId,
+          category: category,
+        });
       }
     } catch (error) {
       console.error(error);
@@ -49,9 +55,9 @@ const ListScreen = ({ navigation, route }) => {
   };
 
   useEffect(() => {
-    setCategoryIndex(itemId);
+    setCategoryIndex(productId);
     fetchProductList(category);
-  }, [itemId]);
+  }, [productId]);
 
   const CategoryList = () => {
     return (
@@ -63,22 +69,22 @@ const ListScreen = ({ navigation, route }) => {
             onPress={() => {
               if (index === 0) {
                 navigation.navigate("listScreen", {
-                  itemId: index,
+                  productId: index,
                   category: "CACTUS",
                 });
               } else if (index === 1) {
                 navigation.navigate("listScreen", {
-                  itemId: index,
+                  productId: index,
                   category: "AIR_PURITY_PLANT",
                 });
               } else if (index === 2) {
                 navigation.navigate("listScreen", {
-                  itemId: index,
+                  productId: index,
                   category: "POT",
                 });
               } else if (index === 3) {
                 navigation.navigate("listScreen", {
-                  itemId: index,
+                  productId: index,
                   category: "FLOWER",
                 });
               }
