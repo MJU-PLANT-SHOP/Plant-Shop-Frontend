@@ -22,7 +22,7 @@ import {
 } from "../object/Object";
 import cart from "./Cart";
 import IconButton from "../component/IconButton";
-import productApi from "../api/ProductApi";
+import { productApi } from "../api/Api";
 import { ActivityIndicator } from "react-native";
 import { Colors } from "react-native/Libraries/NewAppScreen";
 
