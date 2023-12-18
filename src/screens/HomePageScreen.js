@@ -20,111 +20,101 @@ import {
 import IconButton from "../component/IconButton";
 import IconMenuButton from "../component/IconMenuButton";
 import IconMyPageButton from "../component/IconMypageButton";
+import productApi from "../api/ProductApi";
+import { useState, useEffect } from "react";
+import { ActivityIndicator } from "react-native";
 
 const Home = ({ navigation }) => {
   React.useEffect(() => {}, []);
+  const [firstProductList, setFirstProductList] = useState([]);
+  const [secondProductList, setSecondProductList] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [message, setMessage] = useState("");
 
-  // Render
-
-  function renderNewPlants(item, index) {
-    return (
-      <View
-        style={{
-          alignItems: "center",
-          justifyContent: "center",
-          marginHorizontal: SIZES.base,
-        }}
-      >
-        <Image
-          source={item.image[0]}
-          resizeMode="cover"
-          style={{
-            width: SIZES.width * 0.23,
-            height: "82%",
-            borderRadius: 15,
-          }}
-        />
-
-        <View
-          style={{
-            position: "absolute",
-            bottom: "17%",
-            right: 0,
-            backgroundColor: COLORS.primary,
-            paddingHorizontal: SIZES.base,
-            borderTopLeftRadius: 10,
-            borderBottomLeftRadius: 10,
-          }}
-        >
-          <Text style={{ color: COLORS.white }}>{item.name}</Text>
-        </View>
-
-        <TouchableOpacity
-          style={{
-            position: "absolute",
-            top: "15%",
-            left: 7,
-          }}
-          onPress={() => navigation.navigate("상품 페이지", { object: item })}
-        >
-          <Image
-            source={item.favourite ? icons.heartRed : icons.heartGreenOutline}
-            resizeMode="contain"
-            style={{
-              width: 20,
-              height: 20,
-            }}
-          />
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
+  useEffect(() => {
+    const getSecondList = async () => {
+      try {
+        const response = await productApi.getProductListForHomepageSecondMenu();
+        if (response.data.code === "1") {
+          console.log(response.data.data);
+          setSecondProductList(response.data.data);
+        }
+      } catch (error) {
+        console.error(error);
+        setMessage("오류가 발생했습니다. 다시 시도해주세요.");
+        setModalVisible(true);
+      }
+    };
+    const getFirstList = async () => {
+      try {
+        const response = await productApi.getProductListForHomepageFirstMenu();
+        if (response.data.code === "1") {
+          setFirstProductList(response.data.data);
+        }
+      } catch (error) {
+        console.error(error);
+        setMessage("오류가 발생했습니다. 다시 시도해주세요.");
+        setModalVisible(true);
+      }
+    };
+    getFirstList();
+    getSecondList();
+  }, []);
   const renderItem = ({ item }) => (
-    <TouchableOpacity
+    <View
       style={{
-        marginVertical: SIZES.base,
-        width: SIZES.width / 2.5,
+        alignItems: "center",
+        justifyContent: "center",
+        marginHorizontal: SIZES.base,
       }}
-      onPress={() => navigation.navigate("상품 페이지", { object: item })}
     >
-      <View
+      <Image
+        source={{ uri: item.imageUrl }}
+        resizeMode="cover"
         style={{
-          height: 80,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          backgroundColor: COLORS.primary,
+          width: SIZES.width * 0.23,
+          height: "82%",
+          borderRadius: 15,
         }}
-      >
-        <Image
-          source={item.image}
-          resizeMode="cover"
-          style={{
-            width: "100%",
-            height: "100%",
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-          }}
-        />
-      </View>
+      />
 
       <View
         style={{
-          padding: SIZES.padding,
-          backgroundColor: COLORS.lightGray,
-          borderBottomLeftRadius: 20,
-          borderBottomRightRadius: 20,
+          position: "absolute",
+          bottom: "17%",
+          right: 0,
+          backgroundColor: COLORS.primary,
+          paddingHorizontal: SIZES.base,
+          borderTopLeftRadius: 10,
+          borderBottomLeftRadius: 10,
         }}
       >
-        <Text style={{}}>{item.title}</Text>
-        <Text style={{}}>{item.description}</Text>
+        <Text style={{ color: COLORS.white }}>{item.name}</Text>
       </View>
-    </TouchableOpacity>
+
+      <TouchableOpacity
+        style={{
+          position: "absolute",
+          top: "15%",
+          left: 7,
+        }}
+        onPress={() => navigation.navigate("상품 페이지", { object: item })}
+      >
+        <Image
+          source={item.favourite ? icons.heartRed : icons.heartGreenOutline}
+          resizeMode="contain"
+          style={{
+            width: 20,
+            height: 20,
+          }}
+        />
+      </TouchableOpacity>
+    </View>
   );
 
   return (
     <View style={styles.container}>
-      {/* New Plants */}
+      {/* Today's Share */}
       <View style={{ height: "30%", backgroundColor: COLORS.white }}>
         <View
           style={{
@@ -169,16 +159,14 @@ const Home = ({ navigation }) => {
               <FlatList
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                data={popular}
+                data={firstProductList}
                 keyExtractor={item => item.id.toString()}
-                renderItem={({ item, index }) => renderNewPlants(item, index)}
+                renderItem={renderItem}
               />
             </View>
           </View>
         </View>
       </View>
-
-      {/* Today's Share */}
       <ScrollView>
         <View style={{ height: 300, backgroundColor: COLORS.lightGray }}>
           <View
@@ -200,14 +188,6 @@ const Home = ({ navigation }) => {
                 }}
               >
                 <Text style={{ color: COLORS.secondary }}>오늘의 추천상품</Text>
-
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate("listScreen", { itemId: 0 })
-                  }
-                >
-                  <Text style={{ color: COLORS.secondary }}>See All</Text>
-                </TouchableOpacity>
               </View>
 
               <View
@@ -221,39 +201,51 @@ const Home = ({ navigation }) => {
                   <TouchableOpacity
                     style={{ flex: 1 }}
                     onPress={() =>
-                      navigation.navigate("상품 페이지", { object: flower[2] })
+                      navigation.navigate("상품 페이지", {
+                        productId: secondProductList[0].id,
+                      })
                     }
                   >
-                    <Image
-                      source={flower[2].image[0]}
-                      resizeMode="cover"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 20,
-                        borderColor: COLORS.green,
-                        borderWidth: 2,
-                      }}
-                    />
+                    {secondProductList[0] ? (
+                      <Image
+                        source={{ uri: secondProductList[0].imageUrl }}
+                        resizeMode="cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 20,
+                          borderColor: COLORS.green,
+                          borderWidth: 2,
+                        }}
+                      />
+                    ) : (
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                    )}
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={{ flex: 1, marginTop: SIZES.font }}
                     onPress={() =>
-                      navigation.navigate("상품 페이지", { object: cactus[2] })
+                      navigation.navigate("상품 페이지", {
+                        productId: secondProductList[1].id,
+                      })
                     }
                   >
-                    <Image
-                      source={cactus[2].image[0]}
-                      resizeMode="cover"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 20,
-                        borderColor: COLORS.green,
-                        borderWidth: 2,
-                      }}
-                    />
+                    {secondProductList[1] ? (
+                      <Image
+                        source={{ uri: secondProductList[1].imageUrl }}
+                        resizeMode="cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 20,
+                          borderColor: COLORS.green,
+                          borderWidth: 2,
+                        }}
+                      />
+                    ) : (
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                    )}
                   </TouchableOpacity>
                 </View>
                 <View style={{ flex: 1.3 }}>
@@ -261,21 +253,25 @@ const Home = ({ navigation }) => {
                     style={{ flex: 1, marginLeft: SIZES.font }}
                     onPress={() =>
                       navigation.navigate("상품 페이지", {
-                        object: airPurifyPlantes[2],
+                        productId: secondProductList[2].id,
                       })
                     }
                   >
-                    <Image
-                      source={airPurifyPlantes[2].image[0]}
-                      resizeMode="cover"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 20,
-                        borderColor: COLORS.green,
-                        borderWidth: 2,
-                      }}
-                    />
+                    {secondProductList[2] ? (
+                      <Image
+                        source={{ uri: secondProductList[2].imageUrl }}
+                        resizeMode="cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 20,
+                          borderColor: COLORS.green,
+                          borderWidth: 2,
+                        }}
+                      />
+                    ) : (
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -305,59 +301,77 @@ const Home = ({ navigation }) => {
                   <TouchableOpacity
                     style={{ flex: 1 }}
                     onPress={() =>
-                      navigation.navigate("상품 페이지", { object: flower[3] })
+                      navigation.navigate("상품 페이지", {
+                        productId: secondProductList[3].id,
+                      })
                     }
                   >
-                    <Image
-                      source={flower[3].image[0]}
-                      resizeMode="cover"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 20,
-                        borderColor: COLORS.green,
-                        borderWidth: 2,
-                      }}
-                    />
+                    {secondProductList[3] ? (
+                      <Image
+                        source={{ uri: secondProductList[3].imageUrl }}
+                        resizeMode="cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 20,
+                          borderColor: COLORS.green,
+                          borderWidth: 2,
+                        }}
+                      />
+                    ) : (
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                    )}
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={{ flex: 1, marginTop: SIZES.font }}
                     onPress={() =>
-                      navigation.navigate("상품 페이지", { object: flower[4] })
+                      navigation.navigate("상품 페이지", {
+                        productId: secondProductList[4].id,
+                      })
                     }
                   >
-                    <Image
-                      source={cactus[4].image[0]}
-                      resizeMode="cover"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 20,
-                        borderColor: COLORS.green,
-                        borderWidth: 2,
-                      }}
-                    />
+                    {secondProductList[4] ? (
+                      <Image
+                        source={{ uri: secondProductList[4].imageUrl }}
+                        resizeMode="cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 20,
+                          borderColor: COLORS.green,
+                          borderWidth: 2,
+                        }}
+                      />
+                    ) : (
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                    )}
                   </TouchableOpacity>
                 </View>
                 <View style={{ flex: 1.3 }}>
                   <TouchableOpacity
                     style={{ flex: 1, marginLeft: SIZES.font }}
                     onPress={() =>
-                      navigation.navigate("상품 페이지", { object: cactus[3] })
+                      navigation.navigate("상품 페이지", {
+                        productId: secondProductList[5].id,
+                      })
                     }
                   >
-                    <Image
-                      source={cactus[3].image[0]}
-                      resizeMode="cover"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 20,
-                        borderColor: COLORS.green,
-                        borderWidth: 2,
-                      }}
-                    />
+                    {secondProductList[5] ? (
+                      <Image
+                        source={{ uri: secondProductList[5].imageUrl }}
+                        resizeMode="cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 20,
+                          borderColor: COLORS.green,
+                          borderWidth: 2,
+                        }}
+                      />
+                    ) : (
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -388,59 +402,77 @@ const Home = ({ navigation }) => {
                   <TouchableOpacity
                     style={{ flex: 1 }}
                     onPress={() =>
-                      navigation.navigate("상품 페이지", { object: pot[2] })
+                      navigation.navigate("상품 페이지", {
+                        productId: secondProductList[6].id,
+                      })
                     }
                   >
-                    <Image
-                      source={pot[2].image[0]}
-                      resizeMode="cover"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 20,
-                        borderColor: COLORS.green,
-                        borderWidth: 2,
-                      }}
-                    />
+                    {secondProductList[6] ? (
+                      <Image
+                        source={{ uri: secondProductList[6].imageUrl }}
+                        resizeMode="cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 20,
+                          borderColor: COLORS.green,
+                          borderWidth: 2,
+                        }}
+                      />
+                    ) : (
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                    )}
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={{ flex: 1, marginTop: SIZES.font }}
                     onPress={() =>
-                      navigation.navigate("상품 페이지", { object: pot[3] })
+                      navigation.navigate("상품 페이지", {
+                        productId: secondProductList[7].id,
+                      })
                     }
                   >
-                    <Image
-                      source={pot[3].image[0]}
-                      resizeMode="cover"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 20,
-                        borderColor: COLORS.green,
-                        borderWidth: 2,
-                      }}
-                    />
+                    {secondProductList[7] ? (
+                      <Image
+                        source={{ uri: secondProductList[7].imageUrl }}
+                        resizeMode="cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 20,
+                          borderColor: COLORS.green,
+                          borderWidth: 2,
+                        }}
+                      />
+                    ) : (
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                    )}
                   </TouchableOpacity>
                 </View>
                 <View style={{ flex: 1.3 }}>
                   <TouchableOpacity
                     style={{ flex: 1, marginLeft: SIZES.font }}
                     onPress={() =>
-                      navigation.navigate("상품 페이지", { object: flower[5] })
+                      navigation.navigate("상품 페이지", {
+                        productId: secondProductList[8].id,
+                      })
                     }
                   >
-                    <Image
-                      source={flower[5].image[0]}
-                      resizeMode="cover"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 20,
-                        borderColor: COLORS.green,
-                        borderWidth: 2,
-                      }}
-                    />
+                    {secondProductList[8] ? (
+                      <Image
+                        source={{ uri: secondProductList[8].imageUrl }}
+                        resizeMode="cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 20,
+                          borderColor: COLORS.green,
+                          borderWidth: 2,
+                        }}
+                      />
+                    ) : (
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
