@@ -61,8 +61,8 @@ const cartApi = {
         const response = await axiosInstance.put('/carts', data);
         return response;
     },
-    deleteCartItem: async (cartId) => {
-        const response = await axiosInstance.delete(`/carts?cartId=${cartId}`);
+    deleteCartItem: async (productId) => {
+        const response = await axiosInstance.delete(`/carts?productId=${productId}`);
         return response;
     },
 };

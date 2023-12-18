@@ -15,44 +15,97 @@ import BasicButton from "../component/BasicButton";
 import axios from "axios";
 import {cartApi} from "../api/Api";
 import memberApi from "../api/Api";
-
-const Item = ({ item, index, onDelete }) => {
-  const [renderPrice, setRenderPrice] = useState(priceToInt(item.price * item.count));
+const fetchData = async (setItems, navigation) => {
+  try {
+    const response = await cartApi.getCartList();
+    if (response.data.code === "1") {
+      const cartItems = response.data.data.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        count: item.count,
+        price: item.price,
+      }));
+      setItems(cartItems);
+    } else if(response.data.code === "13") {
+      await tokenUpdate(navigation);
+      await fetchData();
+    } else {
+      console.log(response.data.code);
+      console.log(response);
+      // setErrorMessage("장바구니 목록 가져오기에 실패했습니다.");
+      // setModalVisible(true);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+const Item = ({ item, index, onDelete, navigation }) => {
+  const [renderPrice, setRenderPrice] = useState(item.price*item.count);
   const [num, setNum] = useState(item.count);
   const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
   useEffect(() => {
     setNum(item.count);
-    setRenderPrice(priceToInt(item.price));
+    setRenderPrice(item.price*num);
   }, [item.count, item.price]);
 
   if (num < 1) {
     setNum(1);
-    setRenderPrice(priceToInt(item.price));
-    item.quantity = 1;
+    setRenderPrice(item.price);
+    item.count = 1;
   }
   if (num > 10) {
     setNum(10);
-    setRenderPrice(priceToInt(item.price) * 10);
-    item.quantity = 10;
+    setRenderPrice(item.price * 10);
+    item.count = 10;
   }
-
-  const setPlusValue = () => {
-    setNum(prevNum => {
-      const newNum = prevNum + 1;
-      setRenderPrice(priceToInt(item.price) * newNum);
-      item.quantity = newNum;
-      return newNum;
-    });
+  const setPlusValue = async () => {
+    try {
+      const newNum = item.count + 1;
+      if(newNum<=10) {
+        const response = await cartApi.updateCartItem({
+          "productId": item.productId,
+          "count": newNum,
+        });
+        if (response.data.code === "1") {
+          setRenderPrice(item.price * newNum);
+          item.count = newNum;
+        } else if (response.data.code === "13") {
+          await tokenUpdate(navigation);
+          await setPlusValue();
+        } else if (response.data.code === "30") {
+          console.error("존재하지 않는 장바구니 아이템입니다.");
+        } else {
+          console.error("알 수 없는 오류 발생.");
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
-
-  const setMinusValue = () => {
-    setNum(prevNum => {
-      const newNum = prevNum - 1;
-      setRenderPrice(priceToInt(item.price) * newNum);
-      item.quantity = newNum;
-      return newNum;
-    });
+  const setMinusValue = async () => {
+    try {
+      const newNum = item.count - 1;
+      if(newNum>0) {
+        const response = await cartApi.updateCartItem({
+          "productId": item.productId,
+          "count": newNum,
+        });
+        if (response.data.code === "1") {
+          setRenderPrice(item.price * newNum);
+          item.count = newNum;
+        } else if (response.data.code === "13") {
+          await tokenUpdate(navigation);
+          await setMinusValue();
+        } else if (response.data.code === "30") {
+          console.error("존재하지 않는 장바구니 아이템입니다.");
+        } else {
+          console.error("알 수 없는 오류 발생.");
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
   return (
       <View
@@ -69,7 +122,7 @@ const Item = ({ item, index, onDelete }) => {
           <Text style={{ fontSize: 20 }}>{"이름: " + item.productName}</Text>
           <Text style={{ fontSize: 20 }}>{"수량: " + item.count}</Text>
           <Text style={{ fontSize: 20 }}>
-            {"가격: " + item.price.toLocaleString() + "원"}
+            {"가격: " + (item.price*item.count).toLocaleString() + "원"}
           </Text>
         </View>
         <View
@@ -104,52 +157,29 @@ const Item = ({ item, index, onDelete }) => {
 const Cart = ({ navigation }) => {
   const [items, setItems] = useState([]);
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await cartApi.getCartList();
-        if (response.data.code === "1") {
-          const cartItems = response.data.data.map(item => ({
-            productName: item.productName,
-            count: item.count,
-            price: item.price,
-          }));
-          setItems(cartItems);
-        } else if(response.data.code === "13") {
-          // await tokenUpdate(navigation);
-          // await fetchData();
-        } else {
-          console.log(response.data.code);
-          console.log(response);
-          // setErrorMessage("장바구니 목록 가져오기에 실패했습니다.");
-          // setModalVisible(true);
-        }
-        // const data = await AsyncStorage.getItem("cart");
-        // const parsedData = data ? JSON.parse(data) : [];
-        // setItems(parsedData);
-      } catch (error) {
-        console.log(error);
-        // setErrorMessage("Failed to fetch cart items from the server");
-        // setModalVisible(true);
-      }
-    };
-
-    fetchData();
+    fetchData(setItems, navigation);
   }, []);
 
   const handleDelete = async index => {
     try {
-      const updatedItems = items.filter((_, itemIndex) => itemIndex !== index);
-      setItems(updatedItems);
-      await AsyncStorage.setItem("cart", JSON.stringify(updatedItems));
-    } catch (e) {
-      console.log(e);
+      const response = await cartApi.deleteCartItem(items[index].productId);
+      if (response.data.code === "1") {
+        fetchData(setItems, navigation);
+      } else if (response.data.code === "13") {
+        await tokenUpdate(navigation);
+        await handleDelete(index);
+      } else if (response.data.code === "30") {
+        console.log(response.data.message);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
   let totalPrice = 0;
   const cartToPurchase = () => {
     for (let i = 0; i < items.length; i++) {
-      totalPrice = totalPrice + priceToInt(items[i].price) * items[i].quantity;
+      totalPrice = totalPrice + items[i].price * items[i].count;
     }
     navigation.navigate("purchase", {
       object: items,
@@ -169,6 +199,7 @@ const Cart = ({ navigation }) => {
                     key={index}
                     item={item}
                     index={index}
+                    productId={item.productId}
                     productName={item.productName}
                     count={item.count}
                     price={item.price}
@@ -189,6 +220,30 @@ const Cart = ({ navigation }) => {
         </View>
       </View>
   );
+};
+const tokenUpdate = async (navigation) => {
+  try {
+    const accessToken = await AsyncStorage.getItem('access-token');
+    const refreshToken = await AsyncStorage.getItem('refresh-token');
+    const updateTokenResponse = await memberApi.reissue({
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    });
+    if (updateTokenResponse.data.code === "1") {
+      const newAccessToken = updateTokenResponse.data.data.accessToken;
+      const newRefreshToken = updateTokenResponse.data.data.refreshToken;
+
+      await AsyncStorage.setItem('access-token', newAccessToken);
+      await AsyncStorage.setItem('refresh-token', newRefreshToken);
+
+    } else if(updateTokenResponse.data.code === "13"){
+      console.error('토큰 업데이트 실패. 다시 로그인 부탁드립니다.');
+      await AsyncStorage.clear();
+      navigation.navigate("Login", {});
+    }
+  } catch (error) {
+    console.error(error);
+  }
 };
 const styles = StyleSheet.create({
   container: {
