@@ -103,7 +103,9 @@ const Home = ({ navigation }) => {
           top: "15%",
           left: 7,
         }}
-        onPress={() => navigation.navigate("상품 페이지", { object: item })}
+        onPress={() =>
+          navigation.navigate("상품 페이지", { productId: item.id })
+        }
       >
         <Image
           source={item.favourite ? icons.heartRed : icons.heartGreenOutline}
