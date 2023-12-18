@@ -288,14 +288,14 @@ const Purchase = ({ route, navigation }) => {
                 <ScrollView horizontal={true} style={styles.itemScrollView}>
                 {Array.isArray(products) && products.map(product => (
                       <Pressable
-                        // key={product.id}
-                        // onPress={() => {
-                        //   console.log("이미지 클릭!");
-                        //   navigation.navigate("purchase", {
-                        //     object: product,
-                        //     price: product.price * product.count,
-                        //   });
-                        // }}
+                        key={product.id}
+                        onPress={() => {
+                          console.log("이미지 클릭!");
+                          // navigation.navigate("purchase", {
+                          //   object: product,
+                          //   price: product.price * product.count,
+                          // });
+                        }}
                       >
                         <View style={styles.item}>
                           <Image

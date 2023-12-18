@@ -42,6 +42,7 @@ const ProductScreen = ({ route, navigation }) => {
             this.count;
         }
     }
+    
 
     const getProduct = async productId => {
         try {
@@ -589,3 +590,31 @@ const styles = StyleSheet.create({
     },
 });
 export default ProductScreen;
+
+export const getImageUrlByProductId = async (productId) => {
+    try {
+      // productId를 사용하여 서버에서 제품 정보 가져오기
+      const response = await productApi.getProduct(productId);
+  
+      if (response.data.code === "1") {
+        // 서버 응답에서 제품 정보 추출
+        const productDetails = response.data.data;
+        // console.log(productDetails)
+  
+        // productDetails에서 필요한 정보 추출 (예: imageUrl)
+        const imageUrl = productDetails.imageUrlList[0];
+        // console.log(imageUrl)
+  
+        return imageUrl;
+      } else {
+        console.log(response.data.code);
+        console.log(response);
+        // 실패 처리 로직 추가
+        return null;
+      }
+    } catch (error) {
+      console.log(error);
+      // 에러 처리 로직 추가
+      return null;
+    }
+  };
