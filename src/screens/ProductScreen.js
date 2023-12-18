@@ -18,7 +18,8 @@ import FooterButton from "../component/FooterButton";
 import BasicButton from "../component/BasicButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { priceToInt, products } from "../object/Object";
-import { productApi } from "../api/Api";
+import { productApi, cartApi } from "../api/Api";
+import memberApi from "../api/Api";
 import { func } from "prop-types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -37,6 +38,8 @@ const ProductScreen = ({ route, navigation }) => {
             this.size = data.size;
             this.description = data.description;
             this.imageUrlList = data.imageUrlList;
+            this.imageUrl = data.imageUrlList[0];
+            this.count;
         }
     }
 
@@ -138,7 +141,7 @@ const ProductScreen = ({ route, navigation }) => {
                         }}
                     >
                         <Image
-                            source={{ uri: recommandList[i].imageUrl }}
+                            source={{ uri: recommandList[i].imageUrlList }}
                             style={{
                                 width: SCREEN_WIDTH / 3.3,
                                 height: SCREEN_WIDTH / 3.3,
@@ -518,12 +521,14 @@ const ProductScreen = ({ route, navigation }) => {
                                             style={styles.modalButton}
                                             title="구매하기"
                                             onPress={() => {
-                                                productObject.quantity = productNum;
+                                                const image = productObject.imageUrlList[0];
+                                                productObject.count = productNum;
+                                                // productObject.quantity = productNum;
                                                 let totalPrice =
-                                                    priceToInt(productObject.price) * productNum;
-                                                object.push(productObject);
+                                                    productObject.price * productNum;
+                                                // object.push(productObject);
                                                 navigation.navigate("purchase", {
-                                                    object: object,
+                                                    object: productObject,
                                                     price: totalPrice,
                                                 });
                                                 setBuyModalVisible(false);
