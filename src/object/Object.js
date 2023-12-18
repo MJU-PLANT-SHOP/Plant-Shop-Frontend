@@ -566,9 +566,15 @@ export const choiceNum = ({ numItem }) => {
 };
 
 export const priceToInt = stringPrice => {
-  let noCommas = stringPrice.replace(/,/g, "");
-  let price = parseInt(noCommas, 10);
-  return price;
+    try {
+        console.log("stringPrice:", stringPrice);
+        if (stringPrice === undefined || stringPrice === null) return 0;
+        let noCommas = stringPrice.replace(/,/g, "");
+        return parseInt(noCommas, 10);
+    } catch (error) {
+        console.error("Error in priceToInt:", error);
+        return 0;
+    }
 };
 // 문자열 가격 -> 정수로
 export let popular = [];

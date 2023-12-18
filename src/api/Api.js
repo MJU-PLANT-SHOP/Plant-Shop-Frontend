@@ -50,7 +50,25 @@ const memberApi = {
 export default memberApi;
 
 // 장바구니 API
-
+const cartApi = {
+    addToCart: async (data) => {
+        const response = await axiosInstance.post('/carts', data);
+        return response;
+    },
+    getCartList: async () => {
+        const response = await axiosInstance.get('/carts');
+        return response;
+    },
+    updateCartItem: async (data) => {
+        const response = await axiosInstance.put('/carts', data);
+        return response;
+    },
+    deleteCartItem: async (productId) => {
+        const response = await axiosInstance.delete(`/carts?productId=${productId}`);
+        return response;
+    },
+};
+export {cartApi};
 // 주문 API
 const purchaseApi = {
   tryPurchase: async data => {
