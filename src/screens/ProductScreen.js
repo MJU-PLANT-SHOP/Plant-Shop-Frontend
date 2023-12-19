@@ -411,10 +411,10 @@ const ProductScreen = ({ route, navigation }) => {
                                             onPress={async () => {
                                                 try{
                                                     console.log("productObject:", productObject);
-                                                    console.log("productObject.id:", productObject.id);
+                                                    console.log("productObject.id:", productObject.productId);
                                                     console.log("count:", productNum);
                                                     const response = await cartApi.addToCart({
-                                                        productId: productObject.id,
+                                                        productId: productObject.productId,
                                                         count: productNum,
                                                     });
                                                     if (response.data.code === "1") {
