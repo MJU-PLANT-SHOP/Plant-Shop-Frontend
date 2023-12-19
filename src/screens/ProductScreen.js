@@ -151,7 +151,7 @@ const ProductScreen = ({ route, navigation }) => {
                             }}
                         ></Image>
                         <Text style={{ marginTop: 10, fontSize: 20 }}>
-                            {recommandList[i].name}
+                            {recommandList[i].productName}
                         </Text>
                         <Text style={{ marginTop: 7, marginBottom: 7 }}>
                             {recommandList[i].price}원
@@ -236,7 +236,7 @@ const ProductScreen = ({ route, navigation }) => {
                                         }}
                                     >
                                         <Text style={[styles.productName]}>
-                                            {productObject.name}
+                                            {productObject.productName}
                                         </Text>
                                         <Text
                                             style={[
@@ -382,7 +382,7 @@ const ProductScreen = ({ route, navigation }) => {
                                     <TouchableOpacity>
                                         <View style={{}}>
                                             <Text style={[styles.productName, { fontSize: 20 }]}>
-                                                이름: {productObject.name}
+                                                이름: {productObject.productName}
                                             </Text>
                                             <Text style={[styles.productName, { fontSize: 20 }]}>
                                                 수량: {productNum}개
