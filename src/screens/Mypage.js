@@ -164,7 +164,7 @@ const Mypage = ({ navigation }) => {
                   marginBottom: -10,
                 }}
               >
-                {0}
+                {userInfo.completePaymentCount}
               </Text>
               <Text style={{ fontSize: 15 }}>결제완료</Text>
             </View>
@@ -178,7 +178,7 @@ const Mypage = ({ navigation }) => {
                   marginBottom: -10,
                 }}
               >
-                0
+                {userInfo.preparingProductCount}
               </Text>
               <Text style={{ fontSize: 15 }}>준비중</Text>
             </View>
@@ -192,7 +192,7 @@ const Mypage = ({ navigation }) => {
                   marginBottom: -10,
                 }}
               >
-                0
+                {userInfo.shippingCount}
               </Text>
               <Text style={{ fontSize: 15 }}>배송중</Text>
             </View>
@@ -205,7 +205,7 @@ const Mypage = ({ navigation }) => {
                   marginBottom: -10,
                 }}
               >
-                0
+                {userInfo.completeShippingCount}
               </Text>
               <Text style={{ fontSize: 15 }}>배송완료</Text>
             </View>
