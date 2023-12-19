@@ -304,6 +304,9 @@ const Purchase = ({ route, navigation }) => {
                           />
                           <Text style={styles.itemTitle}>{product.productName}</Text>
                           <Text style={styles.itemInfo}>
+                            {product.price} x {product.count}개
+                          </Text>
+                          <Text style={styles.itemInfo}>
                             {product.price * product.count}원
                           </Text>
                         </View>
